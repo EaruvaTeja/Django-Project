@@ -1,0 +1,18 @@
+# Virtual environment
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Database
+db.sqlite3
+
+# Logs
+*.log
+
+# Media uploads
+/media/
+
+# Static files (collected)
+staticfiles/

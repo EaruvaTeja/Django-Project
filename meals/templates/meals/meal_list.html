@@ -1,0 +1,690 @@
+{% extends 'users/base.html' %}
+{% load static %}
+
+{% block title %}{{ title|default:"Meals" }} - FoodOrdering{% endblock %}
+
+{% block content %}
+<!-- CSRF Token for AJAX -->
+{% csrf_token %}
+
+<!-- Hero Section -->
+<section class="bg-light-green py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                {% if title %}
+                    <h1 class="display-4 fw-bold text-dark mb-3">{{ title }}</h1>
+                    <p class="lead text-muted mb-4">Your saved favorite meals from all restaurants</p>
+                {% elif restaurant %}
+                    <h1 class="display-4 fw-bold text-dark mb-3">{{ restaurant.hero_title|default:"Delicious Meals" }}</h1>
+                    <p class="lead text-muted mb-4">{{ restaurant.hero_description|default:"Discover amazing food from top restaurants in your area. Fresh ingredients, great taste, and fast delivery." }}</p>
+                {% else %}
+                <h1 class="display-4 fw-bold text-dark mb-3">Delicious Meals</h1>
+                <p class="lead text-muted mb-4">Discover amazing food from top restaurants in your area. Fresh ingredients, great taste, and fast delivery.</p>
+                {% endif %}
+            </div>
+            <div class="col-lg-6 text-center">
+                {% if title %}
+                    <div class="d-flex align-items-center justify-content-center" style="height: 300px;">
+                        <ion-icon name="heart" style="font-size: 120px; color: #198754;"></ion-icon>
+                    </div>
+                {% elif restaurant and restaurant.hero_image %}
+                    <img src="{{ restaurant.hero_image.url }}" alt="{{ restaurant.hero_title|default:'Delicious Meals' }}" class="img-fluid rounded-3 shadow">
+                {% else %}
+                <img src="{% static 'img/meals/meal-1.jpg' %}" alt="Delicious Meals" class="img-fluid rounded-3 shadow">
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Meals Section -->
+<section class="py-5" id="mealsSection">
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-lg-8 mx-auto text-center">
+                <h2 class="display-5 fw-bold text-dark mb-3">Available Meals</h2>
+                <p class="lead text-muted">Choose from our carefully curated selection of delicious meals</p>
+            </div>
+        </div>
+        
+        {% if meals %}
+            <div class="row g-4">
+                {% for meal in meals %}
+                    <div class="col-lg-4 col-md-6">
+                        <div class="card h-100 border-0 shadow-sm meal-card">
+                            <div class="position-relative">
+                                <a href="{% url 'meals:meal_detail' meal.id %}">
+                                    {% if meal.image %}
+                                        <img src="{{ meal.image.url }}" class="card-img-top" alt="{{ meal.name }}" style="height: 200px; object-fit: cover;">
+                                    {% else %}
+                                        <img src="{% static 'img/meals/meal-1.jpg' %}" class="card-img-top" alt="{{ meal.name }}" style="height: 200px; object-fit: cover;">
+                                    {% endif %}
+                                </a>
+                                <div class="position-absolute top-0 end-0 m-3">
+                                    {% if meal.is_available %}
+                                        <span class="badge bg-success">Available</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Unavailable</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="card-body d-flex flex-column">
+                                <a href="{% url 'meals:meal_detail' meal.id %}" class="text-decoration-none">
+                                    <h5 class="card-title fw-bold text-dark">{{ meal.name }}</h5>
+                                </a>
+                                <p class="card-text text-muted flex-grow-1">{{ meal.description|truncatewords:20 }}</p>
+                                
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div>
+                                        <span class="h5 fw-bold text-success mb-0">${{ meal.price }}</span>
+                                    </div>
+                                    <div class="text-muted">
+                                        <small>{{ meal.restaurant.name }}</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-grid gap-2">
+                                    {% if meal.is_available %}
+                                        <button class="btn btn-success w-100 add-to-cart-btn" 
+                                                data-meal-id="{{ meal.id }}"
+                                                data-meal-name="{{ meal.name }}"
+                                                data-meal-price="{{ meal.price }}">
+                                            <ion-icon name="add-outline" class="me-2"></ion-icon>
+                                            Add to Cart
+                                        </button>
+                                        <div class="d-flex gap-2">
+                                            <button class="btn btn-outline-success flex-fill toggle-favorite-btn" 
+                                                    data-meal-id="{{ meal.id }}"
+                                                    data-is-favorite="{{ meal.is_favorite|yesno:'true,false' }}">
+                                                <ion-icon name="{% if meal.is_favorite %}heart{% else %}heart-outline{% endif %}" class="me-1"></ion-icon>
+                                                <span class="favorite-text">{% if meal.is_favorite %}Remove from Favorites{% else %}Add to Favorites{% endif %}</span>
+                                            </button>
+                                            <a href="{% url 'meals:meal_detail' meal.id %}" class="btn btn-outline-success flex-fill">
+                                                <ion-icon name="eye-outline" class="me-1"></ion-icon>
+                                                Details
+                                            </a>
+                                        </div>
+                                    {% else %}
+                                        <button class="btn btn-secondary" disabled>
+                                            <ion-icon name="close-outline" class="me-2"></ion-icon>
+                                            Unavailable
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="row">
+                <div class="col-lg-8 mx-auto">
+                    <div class="text-center py-5">
+                        <div class="bg-light-green rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 120px; height: 120px;">
+                            <ion-icon name="restaurant-outline" size="large" class="text-success"></ion-icon>
+                        </div>
+                        <h3 class="fw-bold text-dark mb-3">No meals available</h3>
+                        <p class="text-muted mb-4">There are currently no meals available. Please check back later or contact us if you're a restaurant owner.</p>
+                            <a href="#" class="btn btn-success">
+                                <ion-icon name="arrow-back-outline" class="me-2"></ion-icon>
+                                Back to Home
+                            </a>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+        
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="row mt-5">
+            <div class="col-12">
+                <!-- Loading Spinner -->
+                <div class="pagination-loading" id="paginationLoading">
+                    <div class="spinner-border spinner-border-sm" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading meals...</p>
+                </div>
+                
+                <nav aria-label="Meals pagination" id="paginationNav">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1" aria-label="First">
+                                    <span aria-hidden="true">&laquo;&laquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Last">
+                                    <span aria-hidden="true">&raquo;&raquo;</span>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+
+                <!-- Pagination Info -->
+                <div class="text-center mt-3">
+                    <p class="text-muted">
+                        Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} meals
+                        {% if restaurant %}
+                            from {{ restaurant.name }}
+                        {% else %}
+                            (6 per page)
+                        {% endif %}
+                    </p>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-lg-8 mx-auto">
+                <h2 class="display-5 fw-bold text-dark mb-3">Why Choose Our Meals?</h2>
+                <p class="lead text-muted mb-5">Quality, taste, and freshness guaranteed</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="bg-success rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <ion-icon name="leaf-outline" size="large" class="text-white"></ion-icon>
+                    </div>
+                    <h5 class="fw-bold mb-3">Fresh Ingredients</h5>
+                    <p class="text-muted">We use only the freshest ingredients sourced from local suppliers</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="bg-success rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <ion-icon name="time-outline" size="large" class="text-white"></ion-icon>
+                    </div>
+                    <h5 class="fw-bold mb-3">Quick Preparation</h5>
+                    <p class="text-muted">Meals are prepared fresh and delivered within 30 minutes</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="bg-success rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <ion-icon name="star-outline" size="large" class="text-white"></ion-icon>
+                    </div>
+                    <h5 class="fw-bold mb-3">Top Rated</h5>
+                    <p class="text-muted">All our partner restaurants are highly rated by customers</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.meal-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.meal-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+}
+
+/* Favorite Button Styling */
+.toggle-favorite-btn {
+    transition: all 0.3s ease;
+}
+
+.toggle-favorite-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(25, 135, 84, 0.3);
+}
+
+.toggle-favorite-btn.btn-success {
+    background-color: #198754;
+    border-color: #198754;
+}
+
+.toggle-favorite-btn.btn-success:hover {
+    background-color: #157347;
+    border-color: #157347;
+}
+
+.toggle-favorite-btn.btn-outline-success {
+    color: #198754;
+    border-color: #198754;
+}
+
+.toggle-favorite-btn.btn-outline-success:hover {
+    background-color: #198754;
+    border-color: #198754;
+    color: white;
+}
+
+/* Pagination Styling */
+.pagination .page-link {
+    color: #198754;
+    border-color: #dee2e6;
+    padding: 0.5rem 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.pagination .page-link:hover {
+    color: #ffffff;
+    background-color: #198754;
+    border-color: #198754;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(25, 135, 84, 0.3);
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #198754;
+    border-color: #198754;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.pagination .page-item.active .page-link:hover {
+    background-color: #157347;
+    border-color: #157347;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(25, 135, 84, 0.4);
+}
+
+.pagination .page-item.disabled .page-link {
+    color: #6c757d;
+    background-color: #fff;
+    border-color: #dee2e6;
+}
+
+/* Dark mode support for pagination */
+[data-bs-theme="dark"] .pagination .page-link,
+.dark .pagination .page-link {
+    color: #198754;
+    background-color: #212529;
+    border-color: #495057;
+}
+
+[data-bs-theme="dark"] .pagination .page-link:hover,
+.dark .pagination .page-link:hover {
+    color: #ffffff;
+    background-color: #198754;
+    border-color: #198754;
+}
+
+[data-bs-theme="dark"] .pagination .page-item.active .page-link,
+.dark .pagination .page-item.active .page-link {
+    background-color: #198754;
+    border-color: #198754;
+    color: #ffffff;
+}
+
+[data-bs-theme="dark"] .pagination .page-item.disabled .page-link,
+.dark .pagination .page-item.disabled .page-link {
+    color: #6c757d;
+    background-color: #212529;
+    border-color: #495057;
+}
+
+/* Loading spinner for AJAX */
+.pagination-loading {
+    display: none;
+    text-align: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 10px;
+    margin: 1rem 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.spinner-border-sm {
+    width: 1.5rem;
+    height: 1.5rem;
+    color: #198754;
+}
+
+/* Dark mode support for loading spinner */
+[data-bs-theme="dark"] .pagination-loading,
+.dark .pagination-loading {
+    background: linear-gradient(135deg, #212529 0%, #343a40 100%);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+[data-bs-theme="dark"] .pagination-loading p,
+.dark .pagination-loading p {
+    color: #adb5bd;
+}
+
+/* Dark mode support for pagination info text */
+[data-bs-theme="dark"] .text-center.mt-3 p,
+.dark .text-center.mt-3 p {
+    color: #adb5bd;
+}
+
+/* Smooth transitions for meals container */
+.row.g-4 {
+    transition: opacity 0.3s ease;
+}
+
+.row.g-4.loading {
+    opacity: 0.6;
+}
+
+/* Enhanced pagination container */
+#paginationNav {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    padding: 1.5rem;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    margin: 1rem 0;
+}
+
+/* Dark mode support for pagination container */
+[data-bs-theme="dark"] #paginationNav,
+.dark #paginationNav {
+    background: linear-gradient(135deg, #212529 0%, #343a40 100%);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+/* Page number hover effects */
+.pagination .page-item:not(.active):not(.disabled) .page-link {
+    position: relative;
+    overflow: hidden;
+}
+
+.pagination .page-item:not(.active):not(.disabled) .page-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    transition: left 0.5s;
+}
+
+.pagination .page-item:not(.active):not(.disabled) .page-link:hover::before {
+    left: 100%;
+}
+
+/* Dark mode support for shimmer effect */
+[data-bs-theme="dark"] .pagination .page-item:not(.active):not(.disabled) .page-link::before,
+.dark .pagination .page-item:not(.active):not(.disabled) .page-link::before {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+}
+</style>
+
+<!-- Cart JavaScript is already loaded in base.html -->
+
+<!-- AJAX Pagination JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const paginationLinks = document.querySelectorAll('#paginationNav .page-link');
+    const paginationLoading = document.getElementById('paginationLoading');
+    const paginationNav = document.getElementById('paginationNav');
+    const mealsContainer = document.querySelector('.row.g-4');
+    const paginationInfo = document.querySelector('.text-center.mt-3');
+    
+    paginationLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const url = this.getAttribute('href');
+            if (!url) return;
+            
+            // Show loading spinner
+            paginationLoading.style.display = 'block';
+            paginationNav.style.display = 'none';
+            mealsContainer.classList.add('loading');
+            
+            // Make AJAX request
+            fetch(url, {
+                method: 'GET',
+        headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                // Create a temporary container to parse the response
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                
+                // Extract the meals section
+                const newMealsContainer = tempDiv.querySelector('.row.g-4');
+                const newPaginationNav = tempDiv.querySelector('#paginationNav');
+                const newPaginationInfo = tempDiv.querySelector('.text-center.mt-3');
+                
+                if (newMealsContainer) {
+                    mealsContainer.innerHTML = newMealsContainer.innerHTML;
+                }
+                
+                if (newPaginationNav) {
+                    paginationNav.innerHTML = newPaginationNav.innerHTML;
+                    // Re-attach event listeners to new pagination links
+                    attachPaginationListeners();
+                }
+                
+                if (newPaginationInfo) {
+                    paginationInfo.innerHTML = newPaginationInfo.innerHTML;
+                }
+                
+                // Hide loading spinner
+                paginationLoading.style.display = 'none';
+                paginationNav.style.display = 'block';
+                mealsContainer.classList.remove('loading');
+                
+                // Scroll to top of meals section with small offset
+                const mealsSection = document.getElementById('mealsSection');
+                const offsetTop = mealsSection.offsetTop - 20; // 20px offset from top
+                window.scrollTo({
+                    top: offsetTop,
+                    behavior: 'smooth'
+                });
+                
+                // Update URL without page reload
+                window.history.pushState({}, '', url);
+    })
+    .catch(error => {
+                console.error('Error loading page:', error);
+                // Hide loading spinner and show error
+                paginationLoading.style.display = 'none';
+                paginationNav.style.display = 'block';
+                
+                // Show error message
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'alert alert-danger mt-3';
+                errorDiv.innerHTML = '<strong>Error:</strong> Failed to load meals. Please try again.';
+                paginationNav.parentNode.insertBefore(errorDiv, paginationNav.nextSibling);
+                
+                // Remove error message after 5 seconds
+                setTimeout(() => {
+                    if (errorDiv.parentNode) {
+                        errorDiv.parentNode.removeChild(errorDiv);
+                    }
+                }, 5000);
+            });
+        });
+    });
+    
+    function attachPaginationListeners() {
+        const newPaginationLinks = document.querySelectorAll('#paginationNav .page-link');
+        newPaginationLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const url = this.getAttribute('href');
+                if (!url) return;
+                
+                // Show loading spinner
+                paginationLoading.style.display = 'block';
+                paginationNav.style.display = 'none';
+                mealsContainer.classList.add('loading');
+                
+                // Make AJAX request
+                fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.text())
+                .then(html => {
+                    // Create a temporary container to parse the response
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = html;
+                    
+                    // Extract the meals section
+                    const newMealsContainer = tempDiv.querySelector('.row.g-4');
+                    const newPaginationNav = tempDiv.querySelector('#paginationNav');
+                    const newPaginationInfo = tempDiv.querySelector('.text-center.mt-3');
+                    
+                    if (newMealsContainer) {
+                        mealsContainer.innerHTML = newMealsContainer.innerHTML;
+                    }
+                    
+                    if (newPaginationNav) {
+                        paginationNav.innerHTML = newPaginationNav.innerHTML;
+                        // Re-attach event listeners to new pagination links
+                        attachPaginationListeners();
+                    }
+                    
+                    if (newPaginationInfo) {
+                        paginationInfo.innerHTML = newPaginationInfo.innerHTML;
+                    }
+                    
+                    // Hide loading spinner
+                    paginationLoading.style.display = 'none';
+                    paginationNav.style.display = 'block';
+                    mealsContainer.classList.remove('loading');
+                    
+                    // Scroll to top of meals section with small offset
+                    const mealsSection = document.getElementById('mealsSection');
+                    const offsetTop = mealsSection.offsetTop - 20; // 20px offset from top
+                    window.scrollTo({
+                        top: offsetTop,
+                        behavior: 'smooth'
+                    });
+                    
+                    // Update URL without page reload
+                    window.history.pushState({}, '', url);
+                })
+                .catch(error => {
+                    console.error('Error loading page:', error);
+                    // Hide loading spinner and show error
+                    paginationLoading.style.display = 'none';
+                    paginationNav.style.display = 'block';
+                    
+                    // Show error message
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'alert alert-danger mt-3';
+                    errorDiv.innerHTML = '<strong>Error:</strong> Failed to load meals. Please try again.';
+                    paginationNav.parentNode.insertBefore(errorDiv, paginationNav.nextSibling);
+                    
+                    // Remove error message after 5 seconds
+                    setTimeout(() => {
+                        if (errorDiv.parentNode) {
+                            errorDiv.parentNode.removeChild(errorDiv);
+                        }
+                    }, 5000);
+                });
+            });
+        });
+    }
+    
+    // Favorite button functionality
+    const favoriteButtons = document.querySelectorAll('.toggle-favorite-btn');
+    favoriteButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const mealId = this.getAttribute('data-meal-id');
+            const isFavorite = this.getAttribute('data-is-favorite') === 'true';
+            const icon = this.querySelector('ion-icon');
+            const text = this.querySelector('.favorite-text');
+            
+            // Show loading state
+            this.disabled = true;
+            const originalText = text.textContent;
+            text.textContent = 'Loading...';
+            
+            // Make AJAX request
+            fetch(`/meals/toggle-favorite/${mealId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+                    // Update button state
+                    const newIsFavorite = data.is_favorite;
+                    this.setAttribute('data-is-favorite', newIsFavorite);
+                    
+                    if (newIsFavorite) {
+                        icon.setAttribute('name', 'heart');
+                        text.textContent = 'Remove from Favorites';
+                        this.classList.remove('btn-outline-success');
+                        this.classList.add('btn-success');
+                    } else {
+                        icon.setAttribute('name', 'heart-outline');
+                        text.textContent = 'Add to Favorites';
+                        this.classList.remove('btn-success');
+                        this.classList.add('btn-outline-success');
+                    }
+                    
+                    // Show success message
+                    showAddToCartPopup(data.message);
+        } else {
+                    // Show error message
+                    showAddToCartPopup('Error: ' + data.error, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+                showAddToCartPopup('Error updating favorites', 'error');
+    })
+    .finally(() => {
+                // Reset button state
+                this.disabled = false;
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

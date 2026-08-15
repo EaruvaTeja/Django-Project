@@ -1,0 +1,30 @@
+{% extends 'users/base.html' %}
+{% load static %}
+
+{% block title %}Access Denied - FoodOrdering{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-danger">
+                <div class="card-body text-center py-5">
+                    <ion-icon name="lock-closed-outline" style="font-size: 64px; color: #dc3545;" class="mb-4"></ion-icon>
+                    <h2 class="fw-bold text-dark mb-3">Access Denied</h2>
+                    <p class="text-muted mb-4">You don't have permission to access this page. Restaurant owner privileges are required.</p>
+                    <div class="d-flex gap-3 justify-content-center">
+                        <a href="/" class="btn btn-primary">
+                            <ion-icon name="home-outline" class="me-2"></ion-icon>
+                            Go Home
+                        </a>
+                        <a href="#" class="btn btn-outline-primary">
+                            <ion-icon name="log-in-outline" class="me-2"></ion-icon>
+                            Login
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,525 @@
+{% extends 'users/base.html' %}
+{% load static %}
+
+{% block title %}{{ meal.name }} - FoodOrdering{% endblock %}
+
+{% block content %}
+<!-- Add to Cart Popup is handled by cart.js -->
+
+<!-- Main Content -->
+<div class="container py-5">
+    <div class="row g-5">
+        <!-- Product Image Section -->
+        <div class="col-lg-6">
+            <div class="product-image-container">
+                <div class="main-image bg-light rounded-3 d-flex align-items-center justify-content-center mb-3" style="height: 400px;">
+                    {% if meal.image %}
+                        <img src="{{ meal.image.url }}" alt="{{ meal.name }}" class="img-fluid rounded-3" style="max-height: 100%; object-fit: cover;">
+                    {% else %}
+                        <img src="{% static 'img/meals/meal-1.jpg' %}" alt="{{ meal.name }}" class="img-fluid rounded-3" style="max-height: 100%; object-fit: cover;">
+                    {% endif %}
+                </div>
+                
+                <!-- Image Thumbnails -->
+                <div class="image-thumbnails d-flex gap-2">
+                    <div class="thumbnail active bg-light rounded-2 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                        {% if meal.image %}
+                            <img src="{{ meal.image.url }}" alt="{{ meal.name }}" class="img-fluid rounded-2" style="max-height: 100%; object-fit: cover;">
+                        {% else %}
+                            <img src="{% static 'img/meals/meal-1.jpg' %}" alt="{{ meal.name }}" class="img-fluid rounded-2" style="max-height: 100%; object-fit: cover;">
+                        {% endif %}
+                    </div>
+                    <!-- Additional thumbnails would go here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Details Section -->
+        <div class="col-lg-6">
+            <div class="product-details">
+                <!-- Restaurant Info -->
+                <div class="restaurant-info mb-3">
+                    <span class="badge bg-success me-2">{{ meal.restaurant.name }}</span>
+                    <span class="text-muted">
+                        <ion-icon name="star" class="me-1"></ion-icon>
+                        4.8 (124 reviews)
+                    </span>
+                </div>
+
+                <!-- Product Title -->
+                <h1 class="display-5 fw-bold text-dark mb-3">{{ meal.name }}</h1>
+
+                <!-- Product Description -->
+                <p class="lead text-muted mb-4">{{ meal.description|default:"Delicious meal prepared with fresh ingredients and authentic flavors." }}</p>
+
+                <!-- Price and Availability -->
+                <div class="price-section mb-4">
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="display-6 fw-bold text-primary me-3">${{ meal.price }}</span>
+                        {% if meal.is_available %}
+                            <span class="badge bg-success">
+                                <ion-icon name="checkmark-circle" class="me-1"></ion-icon>
+                                Available
+                            </span>
+                        {% else %}
+                            <span class="badge bg-danger">
+                                <ion-icon name="close-circle" class="me-1"></ion-icon>
+                                Unavailable
+                            </span>
+                        {% endif %}
+                    </div>
+                    <p class="text-muted mb-0">Delivery time: 30-45 minutes</p>
+                </div>
+
+                <!-- Quantity Selector -->
+                <div class="quantity-section mb-4">
+                    <label class="form-label fw-bold">Quantity</label>
+                    <div class="quantity-controls d-flex align-items-center">
+                        <button class="btn btn-outline-secondary quantity-btn" id="decreaseQty">
+                            <ion-icon name="remove-outline"></ion-icon>
+                        </button>
+                        <input type="number" class="form-control quantity-input text-center mx-3" id="quantity" value="1" min="1" max="25" style="width: 80px;">
+                        <button class="btn btn-outline-secondary quantity-btn" id="increaseQty">
+                            <ion-icon name="add-outline"></ion-icon>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Add to Cart Button -->
+                <div class="add-to-cart-section mb-4">
+                    {% if meal.is_available %}
+                        <button class="btn btn-primary btn-lg w-100 mb-3 add-to-cart-btn" 
+                                data-meal-id="{{ meal.id }}" 
+                                data-meal-name="{{ meal.name }}"
+                                data-meal-price="{{ meal.price }}"
+                                id="addToCartBtn">
+                            <ion-icon name="cart-outline" class="me-2"></ion-icon>
+                            Add to Cart - $<span id="totalPrice">{{ meal.price }}</span>
+                        </button>
+                    {% else %}
+                        <button class="btn btn-secondary btn-lg w-100 mb-3" disabled>
+                            <ion-icon name="close-circle-outline" class="me-2"></ion-icon>
+                            Currently Unavailable
+                        </button>
+                    {% endif %}
+                    
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-success flex-fill toggle-favorite-btn" 
+                                data-meal-id="{{ meal.id }}"
+                                data-is-favorite="{{ meal.is_favorite|yesno:'true,false' }}">
+                            <ion-icon name="{% if meal.is_favorite %}heart{% else %}heart-outline{% endif %}" class="me-2"></ion-icon>
+                            <span class="favorite-text">{% if meal.is_favorite %}Remove from Favorites{% else %}Add to Favorites{% endif %}</span>
+                        </button>
+                        <button class="btn btn-outline-secondary flex-fill">
+                            <ion-icon name="share-outline" class="me-2"></ion-icon>
+                            Share
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Product Features -->
+                <div class="product-features">
+                    <h6 class="fw-bold mb-3">What's Included</h6>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <ion-icon name="checkmark-circle" class="text-success me-2"></ion-icon>
+                                <small class="text-muted">Fresh Ingredients</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <ion-icon name="checkmark-circle" class="text-success me-2"></ion-icon>
+                                <small class="text-muted">Made to Order</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <ion-icon name="checkmark-circle" class="text-success me-2"></ion-icon>
+                                <small class="text-muted">Free Delivery</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <ion-icon name="checkmark-circle" class="text-success me-2"></ion-icon>
+                                <small class="text-muted">Hot & Fresh</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Reviews Section -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="fw-bold text-dark mb-0">
+                        <ion-icon name="star-outline" class="me-2"></ion-icon>
+                        Customer Reviews
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Overall Rating -->
+                    <div class="row mb-4">
+                        <div class="col-md-4 text-center">
+                            <div class="rating-summary">
+                                <h2 class="fw-bold text-primary mb-1">4.8</h2>
+                                <div class="stars mb-2">
+                                    <ion-icon name="star" class="text-warning"></ion-icon>
+                                    <ion-icon name="star" class="text-warning"></ion-icon>
+                                    <ion-icon name="star" class="text-warning"></ion-icon>
+                                    <ion-icon name="star" class="text-warning"></ion-icon>
+                                    <ion-icon name="star" class="text-warning"></ion-icon>
+                                </div>
+                                <p class="text-muted mb-0">Based on 124 reviews</p>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="rating-breakdown">
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="me-2">5</span>
+                                    <ion-icon name="star" class="text-warning me-2"></ion-icon>
+                                    <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                                        <div class="progress-bar bg-warning" style="width: 85%"></div>
+                                    </div>
+                                    <span class="text-muted">85%</span>
+                                </div>
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="me-2">4</span>
+                                    <ion-icon name="star" class="text-warning me-2"></ion-icon>
+                                    <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                                        <div class="progress-bar bg-warning" style="width: 10%"></div>
+                                    </div>
+                                    <span class="text-muted">10%</span>
+                                </div>
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="me-2">3</span>
+                                    <ion-icon name="star" class="text-warning me-2"></ion-icon>
+                                    <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                                        <div class="progress-bar bg-warning" style="width: 3%"></div>
+                                    </div>
+                                    <span class="text-muted">3%</span>
+                                </div>
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="me-2">2</span>
+                                    <ion-icon name="star" class="text-warning me-2"></ion-icon>
+                                    <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                                        <div class="progress-bar bg-warning" style="width: 1%"></div>
+                                    </div>
+                                    <span class="text-muted">1%</span>
+                                </div>
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="me-2">1</span>
+                                    <ion-icon name="star" class="text-warning me-2"></ion-icon>
+                                    <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                                        <div class="progress-bar bg-warning" style="width: 1%"></div>
+                                    </div>
+                                    <span class="text-muted">1%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Individual Reviews -->
+                    <div class="reviews-list">
+                        <div class="review-item border-bottom pb-3 mb-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                    <span class="fw-bold">JD</span>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-0">John Doe</h6>
+                                    <div class="stars">
+                                        <ion-icon name="star" class="text-warning"></ion-icon>
+                                        <ion-icon name="star" class="text-warning"></ion-icon>
+                                        <ion-icon name="star" class="text-warning"></ion-icon>
+                                        <ion-icon name="star" class="text-warning"></ion-icon>
+                                        <ion-icon name="star" class="text-warning"></ion-icon>
+                                    </div>
+                                </div>
+                                <div class="ms-auto">
+                                    <small class="text-muted">2 days ago</small>
+                                </div>
+                            </div>
+                            <p class="text-muted mb-0">Absolutely delicious! The flavors are amazing and it arrived hot and fresh. Will definitely order again!</p>
+                        </div>
+                        
+                        <div class="review-item border-bottom pb-3 mb-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                    <span class="fw-bold">JS</span>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-0">Jane Smith</h6>
+                                    <div class="stars">
+                                        <ion-icon name="star" class="text-warning"></ion-icon>
+                                        <ion-icon name="star" class="text-warning"></ion-icon>
+                                        <ion-icon name="star" class="text-warning"></ion-icon>
+                                        <ion-icon name="star" class="text-warning"></ion-icon>
+                                        <ion-icon name="star-outline" class="text-muted"></ion-icon>
+                                    </div>
+                                </div>
+                                <div class="ms-auto">
+                                    <small class="text-muted">1 week ago</small>
+                                </div>
+                            </div>
+                            <p class="text-muted mb-0">Great taste and good portion size. Delivery was quick too!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Product Detail JS -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const quantityInput = document.getElementById('quantity');
+        const decreaseBtn = document.getElementById('decreaseQty');
+        const increaseBtn = document.getElementById('increaseQty');
+        const totalPriceSpan = document.getElementById('totalPrice');
+        const addToCartBtn = document.getElementById('addToCartBtn');
+        const basePrice = {{ meal.price }};
+        
+        // Quantity controls
+        decreaseBtn.addEventListener('click', function() {
+            const currentValue = parseInt(quantityInput.value);
+            if (currentValue > 1) {
+                quantityInput.value = currentValue - 1;
+                updateTotalPrice();
+            }
+        });
+        
+        increaseBtn.addEventListener('click', function() {
+            const currentValue = parseInt(quantityInput.value);
+            if (currentValue < 25) {
+                quantityInput.value = currentValue + 1;
+                updateTotalPrice();
+            }
+        });
+        
+        quantityInput.addEventListener('change', function() {
+            if (this.value < 1) this.value = 1;
+            if (this.value > 25) this.value = 25;
+            updateTotalPrice();
+        });
+        
+        function updateTotalPrice() {
+            const quantity = parseInt(quantityInput.value);
+            const totalPrice = (basePrice * quantity).toFixed(2);
+            totalPriceSpan.textContent = totalPrice;
+        }
+        
+        // Make updateTotalPrice globally accessible for cart.js
+        window.updateTotalPrice = updateTotalPrice;
+        
+        // Add to cart functionality - handled by cart.js
+        // The add-to-cart-btn class will be handled by the CartManager
+        
+        function showAddToCartPopup() {
+            const popup = document.getElementById('addToCartPopup');
+            popup.style.display = 'block';
+            
+            // Position popup
+            const rect = addToCartBtn.getBoundingClientRect();
+            popup.style.top = (rect.top - 100) + 'px';
+            popup.style.left = (rect.left + rect.width / 2 - 150) + 'px';
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                popup.style.display = 'none';
+            }, 3000);
+        }
+    });
+    
+    // Notification function for favorite button
+    function showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; max-width: 400px;';
+        notification.innerHTML = `
+            <div class="d-flex align-items-center">
+                <ion-icon name="${type === 'success' ? 'checkmark-circle' : type === 'error' ? 'alert-circle' : 'information-circle'}" class="me-2"></ion-icon>
+                <span>${message}</span>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto remove after 4 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 4000);
+    }
+    
+    // Favorite button functionality
+    const favoriteButton = document.querySelector('.toggle-favorite-btn');
+    if (favoriteButton) {
+        favoriteButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const mealId = this.getAttribute('data-meal-id');
+            const isFavorite = this.getAttribute('data-is-favorite') === 'true';
+            const icon = this.querySelector('ion-icon');
+            const text = this.querySelector('.favorite-text');
+            
+            // Show loading state
+            this.disabled = true;
+            const originalText = text.textContent;
+            text.textContent = 'Loading...';
+            
+            // Make AJAX request
+            fetch(`/meals/toggle-favorite/${mealId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update button state
+                    const newIsFavorite = data.is_favorite;
+                    this.setAttribute('data-is-favorite', newIsFavorite);
+                    
+                    if (newIsFavorite) {
+                        icon.setAttribute('name', 'heart');
+                        text.textContent = 'Remove from Favorites';
+                        this.classList.remove('btn-outline-success');
+                        this.classList.add('btn-success');
+                    } else {
+                        icon.setAttribute('name', 'heart-outline');
+                        text.textContent = 'Add to Favorites';
+                        this.classList.remove('btn-success');
+                        this.classList.add('btn-outline-success');
+                    }
+                    
+                    // Show success message
+                    showNotification(data.message, 'success');
+                } else {
+                    // Show error message
+                    showNotification('Error: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error updating favorites', 'error');
+            })
+            .finally(() => {
+                // Reset button state
+                this.disabled = false;
+            });
+        });
+    }
+</script>
+
+<!-- Cart JavaScript is already loaded in base.html -->
+
+<!-- Add to Cart Popup Styles -->
+<style>
+    .add-to-cart-popup {
+        animation: slideInUp 0.3s ease-out;
+        z-index: 9999;
+    }
+    
+    /* Favorite Button Styling */
+    .toggle-favorite-btn {
+        transition: all 0.3s ease;
+    }
+
+    .toggle-favorite-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(25, 135, 84, 0.3);
+    }
+
+    .toggle-favorite-btn.btn-success {
+        background-color: #198754;
+        border-color: #198754;
+    }
+
+    .toggle-favorite-btn.btn-success:hover {
+        background-color: #157347;
+        border-color: #157347;
+    }
+
+    .toggle-favorite-btn.btn-outline-success {
+        color: #198754;
+        border-color: #198754;
+    }
+
+    .toggle-favorite-btn.btn-outline-success:hover {
+        background-color: #198754;
+        border-color: #198754;
+        color: white;
+    }
+
+    .popup-content {
+        position: relative;
+        min-width: 250px;
+        max-width: 300px;
+    }
+
+    .popup-arrow {
+        position: absolute;
+        bottom: 100%;
+        right: 20px;
+        width: 0;
+        height: 0;
+        border-left: 10px solid transparent;
+        border-right: 10px solid transparent;
+        border-bottom: 10px solid white;
+    }
+
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .quantity-controls .btn {
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .quantity-input {
+        border: 1px solid #dee2e6;
+    }
+
+    .quantity-input:focus {
+        border-color: var(--primary-green);
+        box-shadow: 0 0 0 0.2rem rgba(148, 216, 45, 0.25);
+    }
+
+    .thumbnail {
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .thumbnail:hover {
+        transform: scale(1.05);
+    }
+
+    .thumbnail.active {
+        border: 2px solid var(--primary-green);
+    }
+</style>
+{% endblock %}

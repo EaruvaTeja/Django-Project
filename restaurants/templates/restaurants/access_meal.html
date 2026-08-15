@@ -1,0 +1,267 @@
+{% extends 'users/base.html' %}
+{% load static %}
+
+{% block title %}Add New Meal - {{ restaurant.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="d-flex align-items-center mb-4">
+                <a href="{% if restaurant %}{% url 'restaurants:manage_meals_for_restaurant' restaurant.id %}{% else %}{% url 'restaurants:manage_meals' %}{% endif %}" class="btn btn-outline-secondary me-3">
+                    <ion-icon name="arrow-back-outline" class="me-1"></ion-icon>
+                    Back to Meals
+                </a>
+                <div>
+                    <h2 class="fw-bold text-dark mb-0">Add New Meal</h2>
+                    <p class="text-muted mb-0">{{ restaurant.name }}</p>
+                </div>
+            </div>
+
+            <!-- Add Meal Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0 fw-bold">Meal Information</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="{{ form.name.id_for_label }}" class="form-label fw-bold">Meal Name *</label>
+                                    {{ form.name }}
+                                    {% if form.name.errors %}
+                                        <div class="text-danger small">{{ form.name.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.price.id_for_label }}" class="form-label fw-bold">Price *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        {{ form.price }}
+                                    </div>
+                                    {% if form.price.errors %}
+                                        <div class="text-danger small">{{ form.price.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-text">{{ form.price.help_text }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label fw-bold">Description</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="text-danger small">{{ form.description.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Preparation Time Section -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="fw-bold text-dark mb-3">
+                                    <ion-icon name="time-outline" class="me-2"></ion-icon>
+                                    Preparation Time
+                                </h6>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.prep_time_min.id_for_label }}" class="form-label fw-bold">Minimum Time (min) *</label>
+                                    {{ form.prep_time_min }}
+                                    {% if form.prep_time_min.errors %}
+                                        <div class="text-danger small">{{ form.prep_time_min.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-text">{{ form.prep_time_min.help_text }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.prep_time_max.id_for_label }}" class="form-label fw-bold">Maximum Time (min) *</label>
+                                    {{ form.prep_time_max }}
+                                    {% if form.prep_time_max.errors %}
+                                        <div class="text-danger small">{{ form.prep_time_max.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-text">{{ form.prep_time_max.help_text }}</div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <ion-icon name="information-circle-outline" class="me-2"></ion-icon>
+                                    <strong>Preparation Time Rules:</strong>
+                                    <ul class="mb-0 mt-2">
+                                        <li>Maximum range cannot exceed 15 minutes</li>
+                                        <li>When you enter a minimum time, maximum will auto-calculate</li>
+                                        <li>You can adjust the range but cannot exceed 15 minutes total</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.image.id_for_label }}" class="form-label fw-bold">Meal Image</label>
+                                    {{ form.image }}
+                                    {% if form.image.errors %}
+                                        <div class="text-danger small">{{ form.image.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-text">{{ form.image.help_text }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        {{ form.is_available }}
+                                        <label class="form-check-label fw-bold" for="{{ form.is_available.id_for_label }}">
+                                            Available for Ordering
+                                        </label>
+                                    </div>
+                                    {% if form.is_available.errors %}
+                                        <div class="text-danger small">{{ form.is_available.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-text">{{ form.is_available.help_text }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Image Preview -->
+                        <div class="mb-3" id="imagePreview" style="display: none;">
+                            <label class="form-label fw-bold">Image Preview</label>
+                            <div class="text-center">
+                                <img id="previewImg" src="" alt="Preview" class="img-fluid rounded" style="max-height: 200px;">
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex gap-3">
+                            <button type="submit" class="btn btn-primary">
+                                <ion-icon name="checkmark-outline" class="me-2"></ion-icon>
+                                Add Meal
+                            </button>
+                            <a href="{% if restaurant %}{% url 'restaurants:manage_meals_for_restaurant' restaurant.id %}{% else %}{% url 'restaurants:manage_meals' %}{% endif %}" class="btn btn-outline-secondary">
+                                <ion-icon name="close-outline" class="me-2"></ion-icon>
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tips Card -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0 fw-bold">
+                        <ion-icon name="bulb-outline" class="me-2"></ion-icon>
+                        Tips for Adding Meals
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li>Use descriptive names that clearly identify the meal</li>
+                        <li>Write detailed descriptions including ingredients and preparation style</li>
+                        <li>Set competitive prices based on your costs and market rates</li>
+                        <li>Upload high-quality images that showcase your food</li>
+                        <li>Keep meals available unless temporarily out of stock</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Preview and Preparation Time Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const imageInput = document.getElementById('{{ form.image.id_for_label }}');
+    const imagePreview = document.getElementById('imagePreview');
+    const previewImg = document.getElementById('previewImg');
+    
+    imageInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImg.src = e.target.result;
+                imagePreview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        } else {
+            imagePreview.style.display = 'none';
+        }
+    });
+    
+    // Preparation time validation and auto-calculation
+    const prepTimeMin = document.getElementById('{{ form.prep_time_min.id_for_label }}');
+    const prepTimeMax = document.getElementById('{{ form.prep_time_max.id_for_label }}');
+    
+    if (prepTimeMin && prepTimeMax) {
+        prepTimeMin.addEventListener('input', function() {
+            const minValue = parseInt(this.value) || 0;
+            const maxValue = parseInt(prepTimeMax.value) || 0;
+            
+            if (minValue > 0) {
+                // Auto-calculate max when min changes
+                const suggestedMax = minValue + 15;
+                if (maxValue < minValue || maxValue > suggestedMax) {
+                    prepTimeMax.value = Math.min(suggestedMax, 60);
+                }
+            }
+            
+            validatePrepTime();
+        });
+        
+        prepTimeMax.addEventListener('input', function() {
+            validatePrepTime();
+        });
+        
+        function validatePrepTime() {
+            const minValue = parseInt(prepTimeMin.value) || 0;
+            const maxValue = parseInt(prepTimeMax.value) || 0;
+            
+            if (minValue > 0 && maxValue > 0) {
+                const range = maxValue - minValue;
+                
+                // Remove existing validation classes
+                prepTimeMin.classList.remove('is-invalid', 'is-valid');
+                prepTimeMax.classList.remove('is-invalid', 'is-valid');
+                
+                if (range > 15) {
+                    prepTimeMax.classList.add('is-invalid');
+                    showPrepTimeError('Preparation time range cannot exceed 15 minutes');
+                } else if (minValue >= maxValue) {
+                    prepTimeMax.classList.add('is-invalid');
+                    showPrepTimeError('Maximum time must be greater than minimum time');
+                } else {
+                    prepTimeMin.classList.add('is-valid');
+                    prepTimeMax.classList.add('is-valid');
+                    hidePrepTimeError();
+                }
+            }
+        }
+        
+        function showPrepTimeError(message) {
+            let errorDiv = document.getElementById('prepTimeError');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.id = 'prepTimeError';
+                errorDiv.className = 'alert alert-warning mt-2';
+                prepTimeMax.parentNode.appendChild(errorDiv);
+            }
+            errorDiv.innerHTML = `<ion-icon name="warning-outline" class="me-1"></ion-icon>${message}`;
+        }
+        
+        function hidePrepTimeError() {
+            const errorDiv = document.getElementById('prepTimeError');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

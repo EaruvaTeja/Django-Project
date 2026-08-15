@@ -1,0 +1,683 @@
+{% extends 'users/base.html' %}
+{% load static %}
+
+{% block title %}Manage Meals - {{ restaurant.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-lg-2 col-md-3">
+            <div class="card">
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <a href="{% if restaurant %}{% url 'restaurants:restaurant_dashboard_for_restaurant' restaurant.id %}{% else %}{% url 'restaurants:restaurant_dashboard' %}{% endif %}" class="list-group-item list-group-item-action">
+                            <ion-icon name="grid-outline" class="me-2"></ion-icon>
+                            Dashboard
+                        </a>
+                        <a href="{% if restaurant %}{% url 'restaurants:manage_meals_for_restaurant' restaurant.id %}{% else %}{% url 'restaurants:manage_meals' %}{% endif %}" class="list-group-item list-group-item-action active">
+                            <ion-icon name="restaurant-outline" class="me-2"></ion-icon>
+                            Manage Meals
+                        </a>
+                        <a href="{% if restaurant %}{% url 'restaurants:restaurant_orders_for_restaurant' restaurant.id %}{% else %}{% url 'restaurants:restaurant_orders' %}{% endif %}" class="list-group-item list-group-item-action">
+                            <ion-icon name="receipt-outline" class="me-2"></ion-icon>
+                            Orders
+                        </a>
+                        <a href="{% if restaurant %}{% url 'restaurants:restaurant_settings_for_restaurant' restaurant.id %}{% else %}{% url 'restaurants:restaurant_settings' %}{% endif %}" class="list-group-item list-group-item-action">
+                            <ion-icon name="settings-outline" class="me-2"></ion-icon>
+                            Settings
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-lg-10 col-md-9">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="fw-bold text-dark mb-0">Manage Meals</h2>
+                    <p class="text-muted mb-0">{{ restaurant.name }}</p>
+                </div>
+                <a href="{% url 'restaurants:add_meal' %}" class="btn btn-primary">
+                    <ion-icon name="add-outline" class="me-2"></ion-icon>
+                    Add New Meal
+                </a>
+            </div>
+
+            <!-- Search and Filter -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-6">
+                            {{ search_form.search }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ search_form.is_available }}
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-outline-primary w-100">
+                                <ion-icon name="search-outline" class="me-1"></ion-icon>
+                                Search
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Meals Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0 fw-bold">Meals ({{ meals.paginator.count }} total)</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if meals %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Image</th>
+                                        <th>Name</th>
+                                        <th>Description</th>
+                                        <th>Price</th>
+                                        <th class="d-none d-md-table-cell">Prep Time</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for meal in meals %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                {% if meal.image %}
+                                                    <img src="{{ meal.image.url }}" alt="{{ meal.name }}" 
+                                                         class="rounded" style="width: 50px; height: 50px; object-fit: cover;">
+                                                {% else %}
+                                                    <div class="bg-light rounded d-flex align-items-center justify-content-center" 
+                                                         style="width: 50px; height: 50px;">
+                                                        <ion-icon name="fast-food-outline" style="font-size: 24px; color: #94D82D;"></ion-icon>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <h6 class="fw-bold mb-0">{{ meal.name }}</h6>
+                                        </td>
+                                        <td>
+                                            <p class="text-muted mb-0">{{ meal.description|truncatewords:10 }}</p>
+                                        </td>
+                                        <td>
+                                            <span class="fw-bold text-success">${{ meal.price }}</span>
+                                        </td>
+                                        <td class="d-none d-md-table-cell">
+                                            <span class="badge bg-info text-dark">{{ meal.prep_time_display }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input meal-toggle" 
+                                                       type="checkbox" 
+                                                       id="meal-toggle-{{ meal.id }}"
+                                                       data-meal-id="{{ meal.id }}"
+                                                       {% if meal.is_available %}checked{% endif %}>
+                                                <label class="form-check-label" for="meal-toggle-{{ meal.id }}">
+                                                    {% if meal.is_available %}
+                                                        <span class="badge bg-success">Available</span>
+                                                    {% else %}
+                                                        <span class="badge bg-secondary">Unavailable</span>
+                                                    {% endif %}
+                                                </label>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{% url 'meals:meal_detail' meal.id %}" 
+                                                   class="btn btn-outline-info" title="View">
+                                                    <ion-icon name="eye-outline"></ion-icon>
+                                                </a>
+                                                <a href="{% url 'restaurants:edit_meal' meal.id %}" 
+                                                   class="btn btn-outline-primary" title="Edit">
+                                                    <ion-icon name="create-outline"></ion-icon>
+                                                </a>
+                                                <a href="{% url 'restaurants:delete_meal' meal.id %}" 
+                                                   class="btn btn-outline-danger" title="Delete">
+                                                    <ion-icon name="trash-outline"></ion-icon>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if meals.has_other_pages %}
+                        <div class="card-footer">
+                            <nav aria-label="Meals pagination">
+                                <ul class="pagination pagination-sm mb-0 justify-content-center">
+                                    {% if meals.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page=1">&laquo;&laquo;</a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ meals.previous_page_number }}">&laquo;</a>
+                                        </li>
+                                    {% endif %}
+                                    
+                                    {% for num in meals.paginator.page_range %}
+                                        {% if meals.number == num %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ num }}</span>
+                                            </li>
+                                        {% elif num > meals.number|add:'-3' and num < meals.number|add:'3' %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                    {% if meals.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ meals.next_page_number }}">&raquo;</a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ meals.paginator.num_pages }}">&raquo;&raquo;</a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <ion-icon name="restaurant-outline" style="font-size: 64px; color: #ccc;" class="mb-3"></ion-icon>
+                            <h5 class="text-muted">No meals found</h5>
+                            <p class="text-muted">Start by adding your first meal to the menu.</p>
+                            <a href="{% url 'restaurants:add_meal' %}" class="btn btn-primary">
+                                <ion-icon name="add-outline" class="me-2"></ion-icon>
+                                Add Your First Meal
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toggle Meal Availability Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const toggles = document.querySelectorAll('.meal-toggle');
+    
+    toggles.forEach(toggle => {
+        toggle.addEventListener('change', function() {
+            const mealId = this.getAttribute('data-meal-id');
+            const isChecked = this.checked;
+            
+            // Show loading state
+            this.disabled = true;
+            
+            // Send AJAX request
+            fetch(`/restaurants/toggle-meal/${mealId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update the label
+                    const label = this.nextElementSibling;
+                    if (data.is_available) {
+                        label.innerHTML = '<span class="badge bg-success">Available</span>';
+                    } else {
+                        label.innerHTML = '<span class="badge bg-secondary">Unavailable</span>';
+                    }
+                } else {
+                    // Revert the toggle
+                    this.checked = !isChecked;
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                this.checked = !isChecked;
+                alert('Error updating meal availability. Please try again.');
+            })
+            .finally(() => {
+                this.disabled = false;
+            });
+        });
+    });
+});
+</script>
+
+<!-- Custom Styling with Dark Mode Support -->
+<style>
+/* ========================
+   LIGHT MODE STYLES
+   ======================== */
+
+/* Sidebar Styling */
+.list-group-item-action {
+    color: #495057;
+    transition: all 0.3s ease;
+}
+
+.list-group-item-action:hover {
+    background-color: #e8f5e8;
+    color: #198754;
+    border-color: #198754;
+}
+
+.list-group-item-action:focus {
+    background-color: #e8f5e8;
+    color: #198754;
+    border-color: #198754;
+    box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+}
+
+.list-group-item-action.active {
+    background-color: #198754;
+    border-color: #198754;
+    color: white;
+}
+
+.list-group-item-action.active:hover {
+    background-color: #157347;
+    border-color: #157347;
+    color: white;
+}
+
+.list-group-item-action.active:focus {
+    background-color: #157347;
+    border-color: #157347;
+    color: white;
+    box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.5);
+}
+
+/* ========================
+   DARK MODE STYLES
+   ======================== */
+
+/* Dark mode detection */
+@media (prefers-color-scheme: dark) {
+    /* Container and Background */
+    .container-fluid {
+        background-color: #121212;
+        color: #e0e0e0;
+        min-height: 100vh;
+    }
+
+    /* Cards */
+    .card {
+        background-color: #1e1e1e;
+        border-color: #333;
+        color: #e0e0e0;
+    }
+
+    .card-header {
+        background-color: #2a2a2a;
+        border-color: #333;
+        color: #e0e0e0;
+    }
+
+    .card-body {
+        background-color: #1e1e1e;
+        color: #e0e0e0;
+    }
+
+    .card-footer {
+        background-color: #2a2a2a;
+        border-color: #333;
+    }
+
+    /* Headers */
+    h2.text-dark, h5, h6 {
+        color: #ffffff !important;
+    }
+
+    .text-muted {
+        color: #b0b0b0 !important;
+    }
+
+    /* Sidebar Dark Mode */
+    .list-group-item-action {
+        background-color: #2a2a2a;
+        border-color: #444;
+        color: #e0e0e0;
+    }
+
+    .list-group-item-action:hover {
+        background-color: #1a4d2e;
+        color: #4ade80;
+        border-color: #4ade80;
+    }
+
+    .list-group-item-action:focus {
+        background-color: #1a4d2e;
+        color: #4ade80;
+        border-color: #4ade80;
+        box-shadow: 0 0 0 0.2rem rgba(74, 222, 128, 0.25);
+    }
+
+    .list-group-item-action.active {
+        background-color: #16a34a;
+        border-color: #16a34a;
+        color: white;
+    }
+
+    .list-group-item-action.active:hover {
+        background-color: #15803d;
+        border-color: #15803d;
+    }
+
+    .list-group-item-action.active:focus {
+        background-color: #15803d;
+        border-color: #15803d;
+        box-shadow: 0 0 0 0.2rem rgba(22, 163, 74, 0.5);
+    }
+
+    /* Forms */
+    .form-control {
+        background-color: #2a2a2a;
+        border-color: #444;
+        color: #e0e0e0;
+    }
+
+    .form-control:focus {
+        background-color: #2a2a2a;
+        border-color: #4ade80;
+        box-shadow: 0 0 0 0.2rem rgba(74, 222, 128, 0.25);
+        color: #e0e0e0;
+    }
+
+    .form-select {
+        background-color: #2a2a2a;
+        border-color: #444;
+        color: #e0e0e0;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23e0e0e0' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 6.5 6.5L14 6'/%3e%3c/svg%3e");
+    }
+
+    .form-select:focus {
+        background-color: #2a2a2a;
+        border-color: #4ade80;
+        box-shadow: 0 0 0 0.2rem rgba(74, 222, 128, 0.25);
+        color: #e0e0e0;
+    }
+
+    /* Tables */
+    .table {
+        color: #e0e0e0;
+        --bs-table-bg: #1e1e1e;
+        --bs-table-border-color: #444;
+    }
+
+    .table-hover > tbody > tr:hover > * {
+        --bs-table-accent-bg: #2a2a2a;
+    }
+
+    .table-light {
+        --bs-table-bg: #2a2a2a;
+        --bs-table-color: #e0e0e0;
+        --bs-table-border-color: #444;
+    }
+
+    .table thead th {
+        background-color: #2a2a2a !important;
+        color: #e0e0e0 !important;
+        border-color: #444 !important;
+    }
+
+    .table tbody td {
+        border-color: #444;
+        color: #e0e0e0;
+    }
+
+    /* Buttons */
+    .btn-primary {
+        background-color: #16a34a;
+        border-color: #16a34a;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: #15803d;
+        border-color: #15803d;
+    }
+
+    .btn-primary:focus {
+        background-color: #15803d;
+        border-color: #15803d;
+        box-shadow: 0 0 0 0.2rem rgba(22, 163, 74, 0.5);
+    }
+
+    .btn-outline-primary {
+        color: #4ade80;
+        border-color: #4ade80;
+    }
+
+    .btn-outline-primary:hover {
+        background-color: #4ade80;
+        border-color: #4ade80;
+        color: #000;
+    }
+
+    .btn-outline-info {
+        color: #38bdf8;
+        border-color: #38bdf8;
+    }
+
+    .btn-outline-info:hover {
+        background-color: #38bdf8;
+        border-color: #38bdf8;
+        color: #000;
+    }
+
+    .btn-outline-danger {
+        color: #f87171;
+        border-color: #f87171;
+    }
+
+    .btn-outline-danger:hover {
+        background-color: #f87171;
+        border-color: #f87171;
+        color: #000;
+    }
+
+    /* Badges */
+    .badge.bg-success {
+        background-color: #16a34a !important;
+        color: white;
+    }
+
+    .badge.bg-secondary {
+        background-color: #6b7280 !important;
+        color: white;
+    }
+
+    .badge.bg-info {
+        background-color: #0ea5e9 !important;
+        color: white;
+    }
+
+    /* Pagination */
+    .pagination .page-link {
+        background-color: #2a2a2a;
+        border-color: #444;
+        color: #e0e0e0;
+    }
+
+    .pagination .page-link:hover {
+        background-color: #374151;
+        border-color: #4ade80;
+        color: #4ade80;
+    }
+
+    .pagination .page-link:focus {
+        background-color: #374151;
+        border-color: #4ade80;
+        box-shadow: 0 0 0 0.2rem rgba(74, 222, 128, 0.25);
+        color: #4ade80;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: #16a34a;
+        border-color: #16a34a;
+        color: white;
+    }
+
+    .pagination .page-item.disabled .page-link {
+        background-color: #1f2937;
+        border-color: #374151;
+        color: #6b7280;
+    }
+
+    /* Meal Image Placeholder */
+    .bg-light {
+        background-color: #374151 !important;
+    }
+
+    /* Form Switch */
+    .form-check-input {
+        background-color: #4b5563;
+        border-color: #6b7280;
+    }
+
+    .form-check-input:checked {
+        background-color: #16a34a;
+        border-color: #16a34a;
+    }
+
+    .form-check-input:focus {
+        border-color: #4ade80;
+        box-shadow: 0 0 0 0.2rem rgba(74, 222, 128, 0.25);
+    }
+
+    /* Success text color */
+    .text-success {
+        color: #4ade80 !important;
+    }
+
+    /* Empty state icon */
+    ion-icon[style*="color: #ccc"] {
+        color: #6b7280 !important;
+    }
+
+    /* Responsive table wrapper */
+    .table-responsive {
+        border-radius: 0.5rem;
+        background-color: #1e1e1e;
+    }
+
+    /* Button group improvements */
+    .btn-group-sm > .btn {
+        border-radius: 0.25rem;
+        margin: 0 1px;
+    }
+
+    /* Smooth transitions for all interactive elements */
+    .btn, .form-control, .form-select, .page-link, .list-group-item-action {
+        transition: all 0.3s ease;
+    }
+
+    /* Icon color adjustments */
+    ion-icon {
+        color: inherit;
+    }
+
+    /* Search form improvements */
+    .row.g-3 .col-md-6 .form-control,
+    .row.g-3 .col-md-4 .form-select {
+        height: calc(2.25rem + 2px);
+    }
+
+    /* Card shadow for depth */
+    .card {
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Table cell padding adjustments */
+    .table td, .table th {
+        padding: 0.75rem;
+        vertical-align: middle;
+    }
+
+    /* Meal image styling */
+    .table td img {
+        border: 1px solid #444;
+    }
+
+    /* Header section improvements */
+    .d-flex.justify-content-between.align-items-center.mb-4 {
+        padding: 1rem 0;
+        border-bottom: 1px solid #333;
+    }
+}
+
+/* Force dark mode styles (for manual dark mode toggle) */
+[data-bs-theme="dark"] {
+    /* Apply all the same dark mode styles here */
+    /* This ensures dark mode works even without system preference */
+    .container-fluid {
+        background-color: #121212;
+        color: #e0e0e0;
+        min-height: 100vh;
+    }
+
+    .card {
+        background-color: #1e1e1e;
+        border-color: #333;
+        color: #e0e0e0;
+    }
+
+    .card-header {
+        background-color: #2a2a2a;
+        border-color: #333;
+        color: #e0e0e0;
+    }
+
+    .card-body {
+        background-color: #1e1e1e;
+        color: #e0e0e0;
+    }
+
+    h2.text-dark, h5, h6 {
+        color: #ffffff !important;
+    }
+
+    .text-muted {
+        color: #b0b0b0 !important;
+    }
+
+    .table {
+        color: #e0e0e0;
+        --bs-table-bg: #1e1e1e;
+        --bs-table-border-color: #444;
+    }
+
+    .table-light {
+        --bs-table-bg: #2a2a2a;
+        --bs-table-color: #e0e0e0;
+        --bs-table-border-color: #444;
+    }
+
+    .form-control {
+        background-color: #2a2a2a;
+        border-color: #444;
+        color: #e0e0e0;
+    }
+
+    .btn-primary {
+        background-color: #16a34a;
+        border-color: #16a34a;
+    }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,978 @@
+{% extends 'users/base.html' %}
+{% load static %}
+
+{% block title %}Restaurant Orders - {{ restaurant.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-lg-2 col-md-3">
+            <div class="card">
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <a href="{% if restaurant %}{% url 'restaurants:restaurant_dashboard_for_restaurant' restaurant.id %}{% else %}{% url 'restaurants:restaurant_dashboard' %}{% endif %}" class="list-group-item list-group-item-action">
+                            <ion-icon name="grid-outline" class="me-2"></ion-icon>
+                            Dashboard
+                        </a>
+                        <a href="{% if restaurant %}{% url 'restaurants:manage_meals_for_restaurant' restaurant.id %}{% else %}{% url 'restaurants:manage_meals' %}{% endif %}" class="list-group-item list-group-item-action">
+                            <ion-icon name="restaurant-outline" class="me-2"></ion-icon>
+                            Manage Meals
+                        </a>
+                        <a href="{% if restaurant %}{% url 'restaurants:restaurant_orders_for_restaurant' restaurant.id %}{% else %}{% url 'restaurants:restaurant_orders' %}{% endif %}" class="list-group-item list-group-item-action active">
+                            <ion-icon name="receipt-outline" class="me-2"></ion-icon>
+                            Orders
+                        </a>
+                        <a href="{% if restaurant %}{% url 'restaurants:restaurant_settings_for_restaurant' restaurant.id %}{% else %}{% url 'restaurants:restaurant_settings' %}{% endif %}" class="list-group-item list-group-item-action">
+                            <ion-icon name="settings-outline" class="me-2"></ion-icon>
+                            Settings
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-lg-10 col-md-9">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="fw-bold text-dark mb-0">Restaurant Orders</h2>
+                    <p class="text-muted mb-0">{{ restaurant.name }} - {{ orders.paginator.count }} total orders</p>
+                </div>
+            </div>
+
+            <!-- Orders Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0 fw-bold">Order History</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if orders %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Customer</th>
+                                        <th>Items</th>
+                                        <th>Total</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in orders %}
+                                    <tr>
+                                        <td>
+                                            <span class="fw-bold">#{{ order.id }}</span>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h6 class="mb-0 fw-bold">{{ order.user.get_full_name|default:order.user.username }}</h6>
+                                                <small class="text-muted">{{ order.user.email }}</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex flex-wrap gap-1">
+                                                {% for item in order.items.all %}
+                                                    <span class="badge bg-light text-dark">
+                                                        {{ item.meal.name }} x{{ item.quantity }}
+                                                    </span>
+                                                {% endfor %}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="fw-bold text-success">${{ order.total_amount }}</span>
+                                        </td>
+                                        <td>
+                                            <span id="status-{{ order.id }}" class="badge 
+                                                {% if order.status == 'pending' %}bg-warning
+                                                {% elif order.status == 'confirmed' %}bg-primary
+                                                {% elif order.status == 'preparing' %}bg-info
+                                                {% elif order.status == 'ready' %}bg-success
+                                                {% elif order.status == 'picked_up' %}bg-secondary
+                                                {% elif order.status == 'in_transit' %}bg-secondary
+                                                {% elif order.status == 'delivered' %}bg-success
+                                                {% elif order.status == 'cancelled' %}bg-danger
+                                                {% endif %}">
+                                                {{ order.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <small class="fw-bold">{{ order.created_at|date:"M d, Y" }}</small><br>
+                                                <small class="text-muted">{{ order.created_at|time:"g:i A" }}</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-info" 
+                                                        onclick="viewOrderDetails({{ order.id }})" 
+                                                        title="View Details">
+                                                    <ion-icon name="eye-outline"></ion-icon>
+                                                </button>
+                                                {% if order.status == 'pending' %}
+                                                <button class="btn btn-outline-success" 
+                                                        onclick="updateOrderStatus({{ order.id }}, 'confirmed')" 
+                                                        title="Confirm Order">
+                                                    <ion-icon name="checkmark-outline"></ion-icon>
+                                                </button>
+                                                <button class="btn btn-outline-danger" 
+                                                        onclick="updateOrderStatus({{ order.id }}, 'cancelled')" 
+                                                        title="Cancel Order">
+                                                    <ion-icon name="close-outline"></ion-icon>
+                                                </button>
+                                                {% elif order.status == 'confirmed' %}
+                                                <button class="btn btn-outline-warning" 
+                                                        onclick="updateOrderStatus({{ order.id }}, 'preparing')" 
+                                                        title="Start Preparing">
+                                                    <ion-icon name="restaurant-outline"></ion-icon>
+                                                </button>
+                                                {% elif order.status == 'preparing' %}
+                                                <button class="btn btn-outline-success" 
+                                                        onclick="updateOrderStatus({{ order.id }}, 'ready')" 
+                                                        title="Mark as Ready">
+                                                    <ion-icon name="checkmark-circle-outline"></ion-icon>
+                                                </button>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if orders.has_other_pages %}
+                        <div class="card-footer">
+                            <nav aria-label="Orders pagination">
+                                <ul class="pagination pagination-sm mb-0 justify-content-center">
+                                    {% if orders.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page=1">&laquo;&laquo;</a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ orders.previous_page_number }}">&laquo;</a>
+                                        </li>
+                                    {% endif %}
+                                    
+                                    {% for num in orders.paginator.page_range %}
+                                        {% if orders.number == num %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ num }}</span>
+                                            </li>
+                                        {% elif num > orders.number|add:'-3' and num < orders.number|add:'3' %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                    {% if orders.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ orders.next_page_number }}">&raquo;</a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ orders.paginator.num_pages }}">&raquo;&raquo;</a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <ion-icon name="receipt-outline" style="font-size: 64px; color: #ccc;" class="mb-3"></ion-icon>
+                            <h5 class="text-muted">No orders yet</h5>
+                            <p class="text-muted">Orders will appear here once customers start placing them.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Order Details Modal -->
+<div class="modal fade" id="orderDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Order Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="orderDetailsContent">
+                <!-- Order details will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add CSRF token for JavaScript -->
+{% csrf_token %}
+
+<!-- Order Management Scripts -->
+<script>
+
+function viewOrderDetails(orderId) {
+    // Show loading state
+    document.getElementById('orderDetailsContent').innerHTML = `
+        <div class="text-center py-4">
+            <ion-icon name="hourglass-outline" style="font-size: 48px; color: #ccc;" class="mb-3"></ion-icon>
+            <p class="text-muted">Loading order details...</p>
+        </div>
+    `;
+    
+    const modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
+    modal.show();
+    
+    // Fetch order details
+    fetch(`/restaurants/order-details/${orderId}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const order = data.order;
+                let itemsHtml = '';
+                
+                order.items.forEach(item => {
+                    itemsHtml += `
+                        <tr>
+                            <td>${item.meal_name}</td>
+                            <td class="text-center">${item.quantity}</td>
+                            <td class="text-end">$${item.price.toFixed(2)}</td>
+                            <td class="text-end">$${item.total.toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+                
+                document.getElementById('orderDetailsContent').innerHTML = `
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-muted mb-2">Customer Information</h6>
+                            <p class="mb-1"><strong>Name:</strong> ${order.customer_name}</p>
+                            <p class="mb-1"><strong>Email:</strong> ${order.customer_email}</p>
+                            <p class="mb-0"><strong>Order Date:</strong> ${order.created_at}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-muted mb-2">Order Status</h6>
+                            <p class="mb-1"><strong>Current Status:</strong> <span class="badge bg-primary">${order.status_display}</span></p>
+                            <p class="mb-1"><strong>Total Amount:</strong> $${order.total_amount.toFixed(2)}</p>
+                            <p class="mb-0"><strong>Last Updated:</strong> ${order.updated_at}</p>
+                        </div>
+                    </div>
+                    
+                    <h6 class="fw-bold text-muted mb-3">Order Items</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Item</th>
+                                    <th class="text-center">Quantity</th>
+                                    <th class="text-end">Price</th>
+                                    <th class="text-end">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${itemsHtml}
+                            </tbody>
+                            <tfoot>
+                                <tr class="table-light">
+                                    <th colspan="3" class="text-end">Total:</th>
+                                    <th class="text-end">$${order.total_amount.toFixed(2)}</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                `;
+            } else {
+                document.getElementById('orderDetailsContent').innerHTML = `
+                    <div class="alert alert-danger">
+                        <ion-icon name="alert-circle-outline" class="me-2"></ion-icon>
+                        Error: ${data.error}
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            document.getElementById('orderDetailsContent').innerHTML = `
+                <div class="alert alert-danger">
+                    <ion-icon name="alert-circle-outline" class="me-2"></ion-icon>
+                    Error loading order details: ${error.message}
+                </div>
+            `;
+        });
+}
+
+function updateOrderStatus(orderId, newStatus) {
+    const statusText = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+    
+    if (confirm(`Are you sure you want to update this order to ${statusText}?`)) {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        fetch(`/restaurants/update-order-status/${orderId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                status: newStatus
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update the status badge
+                const statusElement = document.getElementById(`status-${orderId}`);
+                if (statusElement) {
+                    statusElement.textContent = data.status_display;
+                    
+                    // Update badge color
+                    statusElement.className = 'badge ' + getStatusBadgeClass(data.status);
+                }
+                
+                // Show success message
+                showAlert('success', `Order #${orderId} status updated to ${data.status_display}!`);
+                
+                // Refresh page after 2 seconds to update action buttons
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            } else {
+                showAlert('danger', `Error: ${data.error}`);
+            }
+        })
+        .catch(error => {
+            showAlert('danger', `Error updating order status: ${error.message}`);
+        });
+    }
+}
+
+function getStatusBadgeClass(status) {
+    const statusClasses = {
+        'pending': 'bg-warning',
+        'confirmed': 'bg-primary',
+        'preparing': 'bg-info',
+        'ready': 'bg-success',
+        'picked_up': 'bg-secondary',
+        'in_transit': 'bg-secondary',
+        'delivered': 'bg-success',
+        'cancelled': 'bg-danger'
+    };
+    return statusClasses[status] || 'bg-secondary';
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 1050; max-width: 400px; animation: slideInRight 0.3s ease;';
+    alertDiv.innerHTML = `
+        <ion-icon name="${getAlertIcon(type)}" class="me-2"></ion-icon>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    // Auto-remove after 5 seconds with animation
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.style.animation = 'slideOutRight 0.3s ease';
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 300);
+        }
+    }, 5000);
+}
+
+function getAlertIcon(type) {
+    const icons = {
+        'success': 'checkmark-circle-outline',
+        'danger': 'alert-circle-outline',
+        'warning': 'warning-outline',
+        'info': 'information-circle-outline'
+    };
+    return icons[type] || 'information-circle-outline';
+}
+
+// Enhanced loading state for buttons
+function setButtonLoading(button, isLoading, originalText) {
+    if (isLoading) {
+        button.disabled = true;
+        button.setAttribute('data-original-text', originalText || button.innerHTML);
+        button.innerHTML = '<ion-icon name="hourglass-outline" class="me-2"></ion-icon>Processing...';
+        button.style.minWidth = button.offsetWidth + 'px';
+    } else {
+        button.disabled = false;
+        button.innerHTML = button.getAttribute('data-original-text') || originalText;
+        button.style.minWidth = '';
+    }
+}
+
+// Enhanced view order details with better animations
+function enhancedViewOrderDetails(orderId) {
+    const modal = document.getElementById('orderDetailsModal');
+    const content = document.getElementById('orderDetailsContent');
+    
+    // Show loading with enhanced animation
+    content.innerHTML = `
+        <div class="text-center py-5">
+            <div class="loading-spinner mx-auto mb-3" style="width: 3rem; height: 3rem; border: 4px solid; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            <p class="text-muted mb-0">Loading order details...</p>
+        </div>
+    `;
+    
+    const bootstrapModal = new bootstrap.Modal(modal);
+    bootstrapModal.show();
+    
+    // Add entrance animation
+    modal.addEventListener('shown.bs.modal', () => {
+        modal.style.animation = 'fadeInUp 0.3s ease';
+    });
+}
+</script>
+
+<!-- Custom Styling with Dark Mode Support -->
+<style>
+/* ============== LIGHT MODE STYLES ============== */
+
+/* Override Bootstrap list-group colors with our green theme */
+.list-group-item-action {
+    color: #495057;
+    transition: all 0.3s ease;
+}
+
+.list-group-item-action:hover {
+    background-color: #e8f5e8;
+    color: #198754;
+    border-color: #198754;
+}
+
+.list-group-item-action:focus {
+    background-color: #e8f5e8;
+    color: #198754;
+    border-color: #198754;
+    box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+}
+
+.list-group-item-action.active {
+    background-color: #198754;
+    border-color: #198754;
+    color: white;
+}
+
+.list-group-item-action.active:hover {
+    background-color: #157347;
+    border-color: #157347;
+    color: white;
+}
+
+.list-group-item-action.active:focus {
+    background-color: #157347;
+    border-color: #157347;
+    color: white;
+    box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.5);
+}
+
+/* Light mode enhancements */
+.table th {
+    font-weight: 600;
+    color: #495057;
+}
+
+.card {
+    border: 1px solid #dee2e6;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.badge {
+    font-weight: 500;
+}
+
+/* ============== DARK MODE STYLES ============== */
+
+[data-bs-theme="dark"] {
+    /* Sidebar Dark Mode */
+    .list-group-item-action {
+        color: #adb5bd;
+        background-color: transparent;
+        border-color: #495057;
+    }
+
+    .list-group-item-action:hover {
+        background-color: rgba(25, 135, 84, 0.2);
+        color: #94d82d;
+        border-color: #94d82d;
+    }
+
+    .list-group-item-action:focus {
+        background-color: rgba(25, 135, 84, 0.2);
+        color: #94d82d;
+        border-color: #94d82d;
+        box-shadow: 0 0 0 0.2rem rgba(148, 216, 45, 0.25);
+    }
+
+    .list-group-item-action.active {
+        background-color: #94d82d;
+        border-color: #94d82d;
+        color: #000;
+        font-weight: 600;
+    }
+
+    .list-group-item-action.active:hover {
+        background-color: #7fb327;
+        border-color: #7fb327;
+        color: #000;
+    }
+
+    .list-group-item-action.active:focus {
+        background-color: #7fb327;
+        border-color: #7fb327;
+        color: #000;
+        box-shadow: 0 0 0 0.2rem rgba(148, 216, 45, 0.5);
+    }
+
+    /* Card Dark Mode */
+    .card {
+        background-color: #212529;
+        border-color: #495057;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.3);
+    }
+
+    .card-header {
+        background-color: #2c3136;
+        border-bottom-color: #495057;
+        color: #f8f9fa;
+    }
+
+    .card-body {
+        background-color: #212529;
+        color: #f8f9fa;
+    }
+
+    .card-footer {
+        background-color: #2c3136;
+        border-top-color: #495057;
+    }
+
+    /* Table Dark Mode */
+    .table {
+        --bs-table-bg: #212529;
+        --bs-table-color: #f8f9fa;
+        --bs-table-border-color: #495057;
+        --bs-table-hover-bg: #2c3136;
+        --bs-table-hover-color: #f8f9fa;
+    }
+
+    .table-light {
+        --bs-table-bg: #2c3136;
+        --bs-table-color: #f8f9fa;
+        --bs-table-border-color: #495057;
+    }
+
+    .table th {
+        color: #94d82d;
+        font-weight: 600;
+        border-bottom-color: #495057;
+    }
+
+    .table td {
+        border-bottom-color: #495057;
+    }
+
+    /* Badge Dark Mode Enhancements */
+    .badge.bg-light {
+        background-color: #495057 !important;
+        color: #f8f9fa !important;
+        border: 1px solid #6c757d;
+    }
+
+    .badge.bg-warning {
+        background-color: #fd7e14 !important;
+        color: #000 !important;
+    }
+
+    .badge.bg-success {
+        background-color: #94d82d !important;
+        color: #000 !important;
+    }
+
+    .badge.bg-info {
+        background-color: #0dcaf0 !important;
+        color: #000 !important;
+    }
+
+    .badge.bg-primary {
+        background-color: #0d6efd !important;
+        color: #fff !important;
+    }
+
+    .badge.bg-secondary {
+        background-color: #6c757d !important;
+        color: #fff !important;
+    }
+
+    .badge.bg-danger {
+        background-color: #dc3545 !important;
+        color: #fff !important;
+    }
+
+    /* Button Dark Mode */
+    .btn-outline-info {
+        color: #0dcaf0;
+        border-color: #0dcaf0;
+    }
+
+    .btn-outline-info:hover {
+        background-color: #0dcaf0;
+        border-color: #0dcaf0;
+        color: #000;
+    }
+
+    .btn-outline-success {
+        color: #94d82d;
+        border-color: #94d82d;
+    }
+
+    .btn-outline-success:hover {
+        background-color: #94d82d;
+        border-color: #94d82d;
+        color: #000;
+    }
+
+    .btn-outline-danger {
+        color: #dc3545;
+        border-color: #dc3545;
+    }
+
+    .btn-outline-danger:hover {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        color: #fff;
+    }
+
+    .btn-outline-warning {
+        color: #fd7e14;
+        border-color: #fd7e14;
+    }
+
+    .btn-outline-warning:hover {
+        background-color: #fd7e14;
+        border-color: #fd7e14;
+        color: #000;
+    }
+
+    /* Pagination Dark Mode */
+    .pagination .page-link {
+        background-color: #2c3136;
+        border-color: #495057;
+        color: #94d82d;
+    }
+
+    .pagination .page-link:hover {
+        background-color: #495057;
+        border-color: #6c757d;
+        color: #94d82d;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: #94d82d;
+        border-color: #94d82d;
+        color: #000;
+        font-weight: 600;
+    }
+
+    .pagination .page-item.disabled .page-link {
+        background-color: #212529;
+        border-color: #495057;
+        color: #6c757d;
+    }
+
+    /* Modal Dark Mode */
+    .modal-content {
+        background-color: #212529;
+        border-color: #495057;
+    }
+
+    .modal-header {
+        background-color: #2c3136;
+        border-bottom-color: #495057;
+        color: #f8f9fa;
+    }
+
+    .modal-body {
+        background-color: #212529;
+        color: #f8f9fa;
+    }
+
+    .modal-title {
+        color: #94d82d;
+    }
+
+    .btn-close {
+        filter: invert(1) grayscale(100%) brightness(200%);
+    }
+
+    /* Text Colors Dark Mode */
+    .text-dark {
+        color: #f8f9fa !important;
+    }
+
+    .text-muted {
+        color: #adb5bd !important;
+    }
+
+    .text-success {
+        color: #94d82d !important;
+    }
+
+    /* Alert Dark Mode */
+    .alert-success {
+        background-color: rgba(148, 216, 45, 0.1);
+        border-color: #94d82d;
+        color: #94d82d;
+    }
+
+    .alert-danger {
+        background-color: rgba(220, 53, 69, 0.1);
+        border-color: #dc3545;
+        color: #dc3545;
+    }
+
+    .alert-warning {
+        background-color: rgba(253, 126, 20, 0.1);
+        border-color: #fd7e14;
+        color: #fd7e14;
+    }
+
+    .alert-info {
+        background-color: rgba(13, 202, 240, 0.1);
+        border-color: #0dcaf0;
+        color: #0dcaf0;
+    }
+
+    /* Empty State Dark Mode */
+    .text-center ion-icon {
+        color: #6c757d !important;
+    }
+
+    /* Transitions for smooth theme switching */
+    * {
+        transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease !important;
+    }
+}
+
+/* ============== RESPONSIVE DARK MODE ============== */
+
+@media (max-width: 768px) {
+    [data-bs-theme="dark"] .card {
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    [data-bs-theme="dark"] .table-responsive {
+        border-radius: 0.375rem;
+        border: 1px solid #495057;
+    }
+}
+
+/* ============== ANIMATION ENHANCEMENTS ============== */
+
+/* Smooth hover effects for dark mode */
+[data-bs-theme="dark"] .table-hover tbody tr:hover {
+    background-color: rgba(148, 216, 45, 0.1) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+[data-bs-theme="dark"] .btn {
+    transition: all 0.3s ease;
+}
+
+[data-bs-theme="dark"] .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Loading animation for dark mode */
+[data-bs-theme="dark"] .loading-spinner {
+    border-color: #495057;
+    border-top-color: #94d82d;
+}
+
+/* ============== KEYFRAME ANIMATIONS ============== */
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes slideInRight {
+    0% {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    0% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+@keyframes fadeInUp {
+    0% {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(148, 216, 45, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(148, 216, 45, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(148, 216, 45, 0);
+    }
+}
+
+/* ============== LOADING SPINNER STYLES ============== */
+
+.loading-spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #94d82d;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+[data-bs-theme="dark"] .loading-spinner {
+    border-color: #495057;
+    border-top-color: #94d82d;
+}
+
+/* ============== ENHANCED HOVER EFFECTS ============== */
+
+.btn-group .btn {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-group .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+[data-bs-theme="dark"] .btn-group .btn:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* Button click effect */
+.btn:active {
+    transform: translateY(0) !important;
+    transition: transform 0.1s ease;
+}
+
+/* Enhanced table row hover effect */
+.table-hover tbody tr {
+    transition: all 0.3s ease;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(148, 216, 45, 0.05);
+    transform: translateX(4px);
+    box-shadow: 4px 0 8px rgba(0, 0, 0, 0.1);
+}
+
+[data-bs-theme="dark"] .table-hover tbody tr:hover {
+    background-color: rgba(148, 216, 45, 0.1);
+    box-shadow: 4px 0 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Card hover effects */
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+[data-bs-theme="dark"] .card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* Badge animation */
+.badge {
+    transition: all 0.3s ease;
+}
+
+.badge:hover {
+    transform: scale(1.05);
+}
+
+/* Alert animations */
+.alert {
+    border-radius: 0.5rem;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+[data-bs-theme="dark"] .alert {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Modal animations */
+.modal.fade .modal-dialog {
+    transition: transform 0.3s ease-out;
+    transform: translate(0, -50px);
+}
+
+.modal.show .modal-dialog {
+    transform: none;
+}
+
+/* Sidebar navigation enhancements */
+.list-group-item {
+    border: none !important;
+    margin-bottom: 2px;
+    border-radius: 0.5rem !important;
+}
+
+/* Focus states for accessibility */
+.btn:focus,
+.list-group-item:focus,
+.page-link:focus {
+    outline: 2px solid #94d82d;
+    outline-offset: 2px;
+}
+
+[data-bs-theme="dark"] .btn:focus,
+[data-bs-theme="dark"] .list-group-item:focus,
+[data-bs-theme="dark"] .page-link:focus {
+    outline-color: #94d82d;
+}
+</style>
+{% endblock %}

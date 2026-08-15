@@ -1,0 +1,379 @@
+{% extends 'users/base.html' %}
+{% load static %}
+
+{% block title %}{{ restaurant.name }} - FoodOrdering{% endblock %}
+
+{% block content %}
+<!-- Restaurant Hero Section -->
+<section class="py-5 bg-body-secondary">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="d-flex align-items-center mb-3">
+                    {% if restaurant.logo %}
+                        <img src="{{ restaurant.logo.url }}" alt="{{ restaurant.name }}" class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover;">
+                    {% else %}
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 80px; height: 80px;">
+                            <ion-icon name="restaurant" style="font-size: 40px;"></ion-icon>
+                        </div>
+                    {% endif %}
+                    <div>
+                        <h1 class="display-6 fw-bold mb-2">{{ restaurant.name }}</h1>
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="rating me-2">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= restaurant.overall_rating %}
+                                        <ion-icon name="star" class="text-warning"></ion-icon>
+                                    {% else %}
+                                        <ion-icon name="star-outline" class="text-warning"></ion-icon>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <span class="text-muted">({{ restaurant.overall_rating|default:0|floatformat:1 }})</span>
+                            <span class="text-muted ms-3">{{ total_orders }} orders</span>
+                        </div>
+                        {% if restaurant.location %}
+                            <p class="text-muted mb-0">
+                                <ion-icon name="location-outline" class="me-1"></ion-icon>
+                                {{ restaurant.location }}
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if restaurant.description %}
+                    <p class="lead text-muted">{{ restaurant.description }}</p>
+                {% endif %}
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <div class="d-flex flex-column gap-2">
+                    <a href="#menu" class="btn btn-primary btn-lg">
+                        <ion-icon name="menu-outline" class="me-1"></ion-icon>
+                        View Menu
+                    </a>
+                    <a href="{% url 'meals:meal_list' %}?restaurant={{ restaurant.id }}" class="btn btn-outline-primary btn-lg">
+                        <ion-icon name="search-outline" class="me-1"></ion-icon>
+                        Browse All Items
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Restaurant Stats -->
+<section class="py-4 bg-body border-bottom">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-3">
+                <div class="d-flex flex-column align-items-center">
+                    <h4 class="fw-bold text-primary mb-1">{{ total_meals }}</h4>
+                    <p class="text-muted mb-0">Menu Items</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="d-flex flex-column align-items-center">
+                    <h4 class="fw-bold text-primary mb-1">{{ total_orders }}</h4>
+                    <p class="text-muted mb-0">Total Orders</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="d-flex flex-column align-items-center">
+                    <h4 class="fw-bold text-primary mb-1">{{ avg_rating }}</h4>
+                    <p class="text-muted mb-0">Average Rating</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="d-flex flex-column align-items-center">
+                    <h4 class="fw-bold text-primary mb-1">30-45</h4>
+                    <p class="text-muted mb-0">Delivery Time (min)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Menu Section -->
+<section id="menu" class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="fw-bold mb-0">Menu</h2>
+                    <span class="text-muted">{{ total_meals }} items available</span>
+                </div>
+
+                {% if meals %}
+                    <div class="row g-4">
+                        {% for meal in meals %}
+                        <div class="col-md-6">
+                            <div class="card h-100 shadow-sm meal-card">
+                                <a href="{% url 'meals:meal_detail' meal.id %}" class="text-decoration-none text-dark">
+                                    {% if meal.image %}
+                                        <img src="{{ meal.image.url }}" class="card-img-top" alt="{{ meal.name }}" style="height: 200px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                            <ion-icon name="fast-food-outline" style="font-size: 60px; color: #94D82D;"></ion-icon>
+                                        </div>
+                                    {% endif %}
+                                    <div class="card-body d-flex flex-column">
+                                        <h5 class="card-title fw-bold">{{ meal.name }}</h5>
+                                        <p class="card-text text-muted">{{ meal.description|truncatewords:15 }}</p>
+                                        <div class="d-flex justify-content-between align-items-center mt-auto">
+                                            <span class="h5 fw-bold text-primary mb-0">${{ meal.price }}</span>
+                                            <span class="text-muted small">
+                                                <ion-icon name="eye-outline" class="me-1"></ion-icon>
+                                                View Details
+                                            </span>
+                                        </div>
+                                    </div>
+                                </a>
+                                <div class="card-footer bg-transparent border-0 p-3">
+                                    <button class="btn btn-primary w-100 add-to-cart-btn" 
+                                            data-meal-id="{{ meal.id }}"
+                                            data-meal-name="{{ meal.name }}"
+                                            data-meal-price="{{ meal.price }}">
+                                        <ion-icon name="add-outline" class="me-1"></ion-icon>
+                                        Add to Cart
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <ion-icon name="restaurant-outline" style="font-size: 80px; color: #dee2e6;" class="mb-3"></ion-icon>
+                        <h4 class="text-muted">No menu items available</h4>
+                        <p class="text-muted">This restaurant hasn't added any menu items yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <div class="sticky-top" style="top: 100px;">
+                    <!-- Restaurant Info Card -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-body">
+                            <h5 class="fw-bold mb-3">Restaurant Info</h5>
+                            <div class="d-flex align-items-center mb-3">
+                                <ion-icon name="time-outline" class="text-primary me-2"></ion-icon>
+                                <div>
+                                    <small class="text-muted">Delivery Time</small>
+                                    <p class="mb-0 fw-bold">{{ restaurant.delivery_time|default:"30-45 minutes" }}</p>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center mb-3">
+                                <ion-icon name="star-outline" class="text-warning me-2"></ion-icon>
+                                <div>
+                                    <small class="text-muted">Rating</small>
+                                    <p class="mb-0 fw-bold">{{ restaurant.overall_rating|default:0|floatformat:1 }}/5.0</p>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center mb-3">
+                                <ion-icon name="restaurant-outline" class="text-success me-2"></ion-icon>
+                                <div>
+                                    <small class="text-muted">Menu Items</small>
+                                    <p class="mb-0 fw-bold">{{ total_meals }} available</p>
+                                </div>
+                            </div>
+                            {% if restaurant.location %}
+                            <div class="d-flex align-items-center mb-3">
+                                <ion-icon name="location-outline" class="text-danger me-2"></ion-icon>
+                                <div>
+                                    <small class="text-muted">Location</small>
+                                    <p class="mb-0 fw-bold">{{ restaurant.location }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% if restaurant.phone_number %}
+                            <div class="d-flex align-items-center mb-3">
+                                <ion-icon name="call-outline" class="text-info me-2"></ion-icon>
+                                <div>
+                                    <small class="text-muted">Phone</small>
+                                    <p class="mb-0 fw-bold">{{ restaurant.phone_number }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% if restaurant.email %}
+                            <div class="d-flex align-items-center mb-3">
+                                <ion-icon name="mail-outline" class="text-warning me-2"></ion-icon>
+                                <div>
+                                    <small class="text-muted">Email</small>
+                                    <p class="mb-0 fw-bold">{{ restaurant.email }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% if restaurant.opening_hours %}
+                            <div class="d-flex align-items-center mb-3">
+                                <ion-icon name="time-outline" class="text-secondary me-2"></ion-icon>
+                                <div>
+                                    <small class="text-muted">Hours</small>
+                                    <p class="mb-0 fw-bold">{{ restaurant.opening_hours }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Similar Restaurants -->
+                    {% if similar_restaurants %}
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="fw-bold mb-3">Similar Restaurants</h5>
+                            {% for similar in similar_restaurants %}
+                            <div class="d-flex align-items-center mb-3 similar-restaurant-item">
+                                {% if similar.logo %}
+                                    <img src="{{ similar.logo.url }}" alt="{{ similar.name }}" class="rounded-circle me-3 flex-shrink-0" style="width: 40px; height: 40px; object-fit: cover;">
+                                {% else %}
+                                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 40px; height: 40px;">
+                                        <ion-icon name="restaurant" style="font-size: 20px; color: #94D82D;"></ion-icon>
+                                    </div>
+                                {% endif %}
+                                <div class="flex-grow-1 me-3" style="min-width: 0;">
+                                    <h6 class="fw-bold mb-1 text-truncate">{{ similar.name }}</h6>
+                                    <small class="text-muted d-block text-truncate">{{ similar.description|truncatewords:6 }}</small>
+                                </div>
+                                <a href="{% url 'restaurants:restaurant_detail' similar.id %}" class="btn btn-sm btn-outline-primary flex-shrink-0">
+                                    View
+                                </a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.meal-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+}
+
+.meal-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+}
+
+/* Clickable meal card styles */
+.meal-card a {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s ease;
+}
+
+.meal-card a:hover {
+    color: inherit;
+    text-decoration: none;
+}
+
+.meal-card a:hover .card-title {
+    color: #198754 !important;
+}
+
+.meal-card a:hover .text-primary {
+    color: #198754 !important;
+}
+
+/* Add to cart button styling */
+.meal-card .card-footer {
+    position: relative;
+    z-index: 2;
+}
+
+.meal-card .add-to-cart-btn {
+    transition: all 0.2s ease;
+}
+
+.meal-card .add-to-cart-btn:hover {
+    background-color: #198754;
+    border-color: #198754;
+    transform: translateY(-1px);
+}
+
+.rating ion-icon {
+    font-size: 16px;
+}
+
+.sticky-top {
+    z-index: 10;
+}
+
+/* Similar Restaurants Layout Fixes */
+.similar-restaurant-item {
+    min-height: 60px;
+}
+
+.similar-restaurant-item .flex-grow-1 {
+    overflow: hidden;
+}
+
+.similar-restaurant-item .text-truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Ensure button stays on same line */
+@media (min-width: 576px) {
+    .similar-restaurant-item {
+        flex-wrap: nowrap;
+    }
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 575px) {
+    .similar-restaurant-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .similar-restaurant-item .flex-grow-1 {
+        width: 100%;
+        margin-right: 0 !important;
+    }
+    
+    .similar-restaurant-item .btn {
+        align-self: flex-end;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Prevent add to cart button clicks from triggering card navigation
+    const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
+    
+    addToCartButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Trigger the add to cart functionality
+            const mealId = this.getAttribute('data-meal-id');
+            const mealName = this.getAttribute('data-meal-name');
+            const mealPrice = this.getAttribute('data-meal-price');
+            
+            // Call the add to cart function if it exists
+            if (typeof addToCart === 'function') {
+                addToCart(mealId, 1, {
+                    name: mealName,
+                    price: mealPrice
+                });
+            } else {
+                // Fallback: redirect to add to cart URL
+                window.location.href = `/meals/add-to-cart/${mealId}/?quantity=1`;
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
