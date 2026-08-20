@@ -1,18 +1,54 @@
-# Virtual environment
-.venv/
-
-# Python cache
+```
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# Database
-db.sqlite3
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv/
+.env/
 
-# Logs
+# Django
 *.log
-
-# Media uploads
-/media/
-
-# Static files (collected)
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
 staticfiles/
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Coverage
+.coverage
+htmlcov/
+coverage/
+```

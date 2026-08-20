@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- 
+Restaurant Detail Template
+
+Displays a specific restaurant's information and its menu items grouped by category.
+The view passes:
+- restaurant: The Restaurant object
+- menu_items: All available MenuItem objects for this restaurant
+- categories: Menu items grouped by category (appetizer, main_course, etc.)
+
+Key Features:
+1. Shows restaurant details (name, rating, delivery time, address)
+2. Displays menu items organized by category
+3. "Add to Cart" functionality with quantity selector
+-->
+
+<div style="max-width: 1000px; margin: 0 auto;">
+    <!-- Restaurant Header -->
+    <div style="background: white; padding: 2rem; border-radius: 8px; margin-bottom: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <h1 style="color: #fc8019; margin-bottom: 0.5rem;">{{ restaurant.name }}</h1>
+        
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
+            <span class="badge badge-success">⭐ {{ restaurant.rating }}/5</span>
+            <span class="badge badge-info">🕐 {{ restaurant.delivery_time }} mins delivery</span>
+            <span class="badge badge-warning">{{ restaurant.cuisine_type }}</span>
+        </div>
+        
+        <p class="text-muted" style="margin-bottom: 1rem;">{{ restaurant.description }}</p>
+        
+        <p class="text-muted" style="font-size: 0.9rem;">
+            📍 {{ restaurant.address }}
+        </p>
+    </div>
+    
+    <!-- Menu Section -->
+    <section>
+        <h2 style="margin-bottom: 1.5rem; color: #333;">📋 Menu</h2>
+        
+        {% if categories %}
+            <!-- Loop through each category -->
+            {% for category_name, items in categories.items %}
+                <div style="margin-bottom: 2rem;">
+                    <!-- Category Title -->
+                    <h3 style="color: #fc8019; border-bottom: 2px solid #fc8019; padding-bottom: 0.5rem; margin-bottom: 1rem;">
+                        {{ category_name|title }}
+                    </h3>
+                    
+                    <!-- Menu Items Grid -->
+                    <div class="grid grid-2">
+                        {% for item in items %}
+                            <!-- Menu Item Card -->
+                            <div class="card">
+                                <div class="card-body">
+                                    <!-- Item Name and Vegetarian Indicator -->
+                                    <h4 style="margin-bottom: 0.5rem;">
+                                        {{ item.name }}
+                                        {% if item.is_vegetarian %}
+                                            <span style="color: #28a745;" title="Vegetarian">🌱</span>
+                                        {% endif %}
+                                    </h4>
+                                    
+                                    <!-- Item Description -->
+                                    <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 0.5rem;">
+                                        {{ item.description|truncatewords:15 }}
+                                    </p>
+                                    
+                                    <!-- Price -->
+                                    <p style="font-size: 1.2rem; font-weight: bold; color: #333; margin-bottom: 1rem;">
+                                        ${{ item.price }}
+                                    </p>
+                                    
+                                    <!-- Add to Cart Form -->
+                                    <!-- Each item has its own form for adding to cart -->
+                                    <form method="post" action="{% url 'orders:add_to_cart' item.id %}">
+                                        {% csrf_token %}
+                                        
+                                        <!-- Hidden field to pass restaurant ID (for cart validation) -->
+                                        <input type="hidden" name="restaurant_id" value="{{ restaurant.id }}">
+                                        
+                                        <!-- Quantity Selector -->
+                                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                            <input type="number" 
+                                                   name="quantity" 
+                                                   value="1" 
+                                                   min="1" 
+                                                   max="10"
+                                                   style="width: 60px; padding: 5px; border: 1px solid #ddd; border-radius: 4px;"
+                                                   id="qty_{{ item.id }}">
+                                            
+                                            <!-- Special Instructions Input -->
+                                            <input type="text" 
+                                                   name="special_instructions" 
+                                                   placeholder="Special instructions..."
+                                                   style="flex: 1; padding: 5px; border: 1px solid #ddd; border-radius: 4px;"
+                                                   id="instructions_{{ item.id }}">
+                                        </div>
+                                        
+                                        <!-- Add to Cart Button -->
+                                        <button type="submit" class="btn-primary" style="width: 100%;">
+                                            🛒 Add to Cart
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <!-- No menu items message -->
+            <div style="text-align: center; padding: 3rem; background: white; border-radius: 8px;">
+                <p class="text-muted">No menu items available at the moment.</p>
+            </div>
+        {% endif %}
+    </section>
+    
+    <!-- Back to Restaurants Link -->
+    <div style="margin-top: 2rem; text-align: center;">
+        <a href="{% url 'restaurants:restaurant_list' %}" class="btn-secondary">
+            ← Back to All Restaurants
+        </a>
+    </div>
+</div>
+{% endblock %}

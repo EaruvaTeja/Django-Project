@@ -20,25 +20,36 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-8!q^&451c^5744=g31a#f9p6tce04agwta(uuzp7#j3@j4tv6&'
+SECRET_KEY = 'django-insecure-msb$4$o+lb5zaql++-6bti#916cz*8@p#1k&!!&6q_1d^6&s4a'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']  # Allow all hosts for local development
 
 
 # Application definition
+# These are the Django apps that will be used in our Swiggy clone project.
+# Each app handles a specific functionality:
+# - users: User authentication (login, logout, register)
+# - restaurants: Restaurant and menu item management
+# - orders: Order handling and REST API for placing orders
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'restaurants',
-    'meals',
+    'django.contrib.admin',       # Built-in admin panel for managing data
+    'django.contrib.auth',        # Authentication system
+    'django.contrib.contenttypes',# Content type framework
+    'django.contrib.sessions',    # Session management
+    'django.contrib.messages',    # Messaging framework
+    'django.contrib.staticfiles', # Static file handling
+    
+    # Third-party apps
+    'rest_framework',             # Django REST Framework for API endpoints
+    
+    # Local apps (our custom apps)
+    'users',                      # User authentication app
+    'restaurants',                # Restaurant and menu management app
+    'orders',                     # Orders and cart management app
 ]
 
 MIDDLEWARE = [
@@ -53,10 +64,13 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'swiggy.urls'
 
+# TEMPLATES configuration tells Django where to find HTML template files
+# DIRS: We set this to BASE_DIR / 'templates' so all templates are in a central folder
+# APP_DIRS: True means Django will also look for templates inside each app's templates/ folder
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [BASE_DIR / 'templates'],  # Central templates directory
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -74,6 +88,31 @@ WSGI_APPLICATION = 'swiggy.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
+# DATABASE CONFIGURATION FOR MYSQL
+# To use this project:
+# 1. Create a MySQL database: CREATE DATABASE swiggy_db;
+# 2. Update the DATABASES settings below with your MySQL credentials
+# 3. Install PyMySQL (already in requirements.txt)
+# 4. Run: python manage.py migrate
+
+# Option 1: MySQL Configuration (Uncomment and fill in your credentials)
+"""
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'swiggy_db',          # Your database name
+        'USER': 'your_mysql_username', # Your MySQL username
+        'PASSWORD': 'your_password',   # Your MySQL password
+        'HOST': 'localhost',           # Usually localhost
+        'PORT': '3306',                # MySQL default port
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
+    }
+}
+"""
+
+# Option 2: SQLite for quick testing (Default - change to MySQL above for production)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -81,6 +120,9 @@ DATABASES = {
     }
 }
 
+# NOTE: For learning purposes, you can start with SQLite (above).
+# When ready to use MySQL, comment out the SQLite block and uncomment the MySQL block above.
+# Then update your credentials and run: python manage.py migrate
 
 
 # Password validation
@@ -119,9 +161,15 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-# Media files
+# STATIC_ROOT: Directory where collectstatic will gather all static files for deployment
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# MEDIA_URL and MEDIA_ROOT are for user-uploaded files (like restaurant logos, meal images)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Default primary key field type (Django 3.2+)
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # Email
@@ -131,4 +179,11 @@ MAILERS = {
     'default': {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
+}
+
+# Django REST Framework Configuration
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',  # Allow unauthenticated requests (for learning)
+    ],
 }

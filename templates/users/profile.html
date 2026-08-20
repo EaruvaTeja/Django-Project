@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- 
+User Profile Template
+
+This template displays the user's profile information and order history.
+The @login_required decorator in the view ensures only logged-in users can access this page.
+
+Key Features:
+1. Displays user information (username, email, date joined)
+2. Shows order history with status badges
+3. Links to individual order details
+-->
+
+<div style="max-width: 900px; margin: 0 auto;">
+    <!-- Profile Header -->
+    <div style="background: white; padding: 2rem; border-radius: 8px; margin-bottom: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <h2 style="color: #fc8019; margin-bottom: 1rem;">👤 {{ user.username }}'s Profile</h2>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div>
+                <strong>Username:</strong><br>
+                <span class="text-muted">{{ user.username }}</span>
+            </div>
+            
+            <div>
+                <strong>Email:</strong><br>
+                <span class="text-muted">{{ user.email|default:"Not provided" }}</span>
+            </div>
+            
+            <div>
+                <strong>Member Since:</strong><br>
+                <span class="text-muted">{{ user.date_joined|date:"F d, Y" }}</span>
+            </div>
+            
+            <div>
+                <strong>Total Orders:</strong><br>
+                <span class="badge badge-info">{{ orders.count }}</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Order History Section -->
+    <section>
+        <h3 style="margin-bottom: 1rem; color: #333;">📦 Order History</h3>
+        
+        {% if orders %}
+            <div style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead style="background: #f8f9fa;">
+                        <tr>
+                            <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">Order #</th>
+                            <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">Restaurant</th>
+                            <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">Date</th>
+                            <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">Total</th>
+                            <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">Status</th>
+                            <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                            <tr style="border-bottom: 1px solid #dee2e6;">
+                                <td style="padding: 1rem;">#{{ order.id }}</td>
+                                <td style="padding: 1rem;">{{ order.restaurant.name }}</td>
+                                <td style="padding: 1rem;">{{ order.created_at|date:"M d, Y H:i" }}</td>
+                                <td style="padding: 1rem;">${{ order.total_amount }}</td>
+                                <td style="padding: 1rem;">
+                                    {% if order.status == 'pending' %}
+                                        <span class="badge badge-warning">Pending</span>
+                                    {% elif order.status == 'confirmed' %}
+                                        <span class="badge badge-info">Confirmed</span>
+                                    {% elif order.status == 'preparing' %}
+                                        <span class="badge badge-info">Preparing</span>
+                                    {% elif order.status == 'out_for_delivery' %}
+                                        <span class="badge badge-info">Out for Delivery</span>
+                                    {% elif order.status == 'delivered' %}
+                                        <span class="badge badge-success">Delivered</span>
+                                    {% elif order.status == 'cancelled' %}
+                                        <span class="badge badge-danger">Cancelled</span>
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 1rem;">
+                                    <a href="{% url 'orders:order_detail' order.id %}" 
+                                       class="btn-primary" style="padding: 5px 10px; font-size: 0.85rem;">
+                                        View Details
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <!-- No orders message -->
+            <div style="background: white; padding: 3rem; border-radius: 8px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <p style="font-size: 1.2rem; color: #666; margin-bottom: 1rem;">You haven't placed any orders yet.</p>
+                <a href="{% url 'restaurants:restaurant_list' %}" class="btn-primary">
+                    Browse Restaurants & Start Ordering!
+                </a>
+            </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}
