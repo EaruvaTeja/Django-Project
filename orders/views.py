@@ -31,7 +31,6 @@ from rest_framework.permissions import IsAuthenticated
 
 from .models import Order, OrderItem
 from restaurants.models import MenuItem, Restaurant
-from .serializers import OrderSerializer
 
 
 @login_required

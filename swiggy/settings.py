@@ -88,41 +88,19 @@ WSGI_APPLICATION = 'swiggy.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
-# DATABASE CONFIGURATION FOR MYSQL
-# To use this project:
-# 1. Create a MySQL database: CREATE DATABASE swiggy_db;
-# 2. Update the DATABASES settings below with your MySQL credentials
-# 3. Install PyMySQL (already in requirements.txt)
-# 4. Run: python manage.py migrate
-
-# Option 1: MySQL Configuration (Uncomment and fill in your credentials)
-"""
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'swiggy_db',          # Your database name
-        'USER': 'your_mysql_username', # Your MySQL username
-        'PASSWORD': 'your_password',   # Your MySQL password
-        'HOST': 'localhost',           # Usually localhost
-        'PORT': '3306',                # MySQL default port
+        'NAME': 'swiggy_db',
+        'USER': 'swiggy_user',
+        'PASSWORD': 'Teja9469#',
+        'HOST': 'localhost',
+        'PORT': '3306',
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
         },
     }
 }
-"""
-
-# Option 2: SQLite for quick testing (Default - change to MySQL above for production)
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-
-# NOTE: For learning purposes, you can start with SQLite (above).
-# When ready to use MySQL, comment out the SQLite block and uncomment the MySQL block above.
-# Then update your credentials and run: python manage.py migrate
 
 
 # Password validation

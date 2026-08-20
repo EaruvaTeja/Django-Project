@@ -1,9 +1,7 @@
-# Django and DRF - Core Framework
-Django>=5.0
-djangorestframework>=3.14
-
-# MySQL Database Driver (Pure Python - no system dependencies needed)
-PyMySQL>=1.1.0
-
-# Image Processing for ImageFields
-Pillow>=10.0
+asgiref==3.12.1
+Django==6.1
+djangorestframework==3.18.0
+pillow==12.3.0
+PyMySQL==1.2.0
+sqlparse==0.5.5
+tzdata==2026.3

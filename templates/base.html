@@ -5,18 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{{ page_title|default:'Swiggy Clone' }}{% endblock %}</title>
     
-    <!-- 
-    Django Template Language Explanation:
     
-    1. {% %} - Template tags (logic like if, for, block)
-    2. {{ }} - Variables (displays data passed from views)
-    3. {% block %} - Defines replaceable sections for child templates
-    4. {% extends %} - Inherits from this base template
-    5. {% include %} - Includes another template snippet
-    
-    This base.html is the parent template that all other templates extend.
-    It defines the common HTML structure (header, footer, navigation).
-    -->
     
     <style>
         /* Basic CSS Reset */
@@ -241,7 +230,7 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Header with Navigation -->
+    
     <header>
         <div class="container">
             <nav>
@@ -252,13 +241,13 @@
                     <li><a href="{% url 'restaurants:restaurant_list' %}">Restaurants</a></li>
                     
                     {% if user.is_authenticated %}
-                        <!-- User is logged in - show personalized links -->
+                        
                         <li><a href="{% url 'orders:cart' %}">Cart</a></li>
                         <li><a href="{% url 'orders:order_history' %}">Orders</a></li>
                         <li><a href="{% url 'users:profile' %}">{{ user.username }}</a></li>
                         <li><a href="{% url 'users:logout' %}">Logout</a></li>
                     {% else %}
-                        <!-- User is not logged in - show auth links -->
+                        
                         <li><a href="{% url 'users:login' %}">Login</a></li>
                         <li><a href="{% url 'users:register' %}">Sign Up</a></li>
                     {% endif %}
@@ -267,7 +256,7 @@
         </div>
     </header>
     
-    <!-- Messages/Alerts Section -->
+    
     {% if messages %}
     <div class="container">
         <div class="messages">
@@ -280,15 +269,15 @@
     </div>
     {% endif %}
     
-    <!-- Main Content Area -->
-    <!-- {% block content %} is where child templates inject their content -->
+    
+    
     <main>
         <div class="container">
             {% block content %}{% endblock %}
         </div>
     </main>
     
-    <!-- Footer -->
+    
     <footer>
         <div class="container">
             <div class="footer-content">
