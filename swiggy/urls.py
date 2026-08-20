@@ -1,39 +1,82 @@
 """
 URL configuration for swiggy project.
 
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/6.1/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+This is the main URL routing file for the entire Django project.
+It includes URLs from all our apps and sets up the homepage.
+
+How URL Routing Works in Django:
+1. User requests a URL like http://127.0.0.1:8000/restaurants/
+2. Django checks this file (swiggy/urls.py) first
+3. It matches the 'restaurants/' prefix and delegates to restaurants/urls.py
+4. The restaurants app then handles the rest of the URL
+
+URL Structure:
+- / -> Homepage (core view)
+- /admin/ -> Django admin panel (built-in)
+- /users/ -> User authentication (login, register, logout, profile)
+- /restaurants/ -> Restaurant listings and menus
+- /orders/ -> Cart, checkout, order history
+- /api/ -> REST API endpoints
+- /media/ -> User-uploaded files (during development)
 """
-from restaurants import views
 
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.shortcuts import render
+
+
+def home_view(request):
+    """
+    Homepage view - the first page users see.
+    
+    This demonstrates a simple function-based view that:
+    1. Receives an HTTP request
+    2. Optionally queries the database
+    3. Returns a rendered template
+    
+    Template: home.html
+    """
+    from restaurants.models import Restaurant
+    
+    # Get featured restaurants (top rated) for the homepage
+    featured_restaurants = Restaurant.objects.filter(is_active=True).order_by('-rating')[:6]
+    
+    context = {
+        'featured_restaurants': featured_restaurants,
+        'page_title': 'Swiggy Clone - Food Delivery'
+    }
+    
+    return render(request, 'home.html', context)
+
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    # Admin panel - built-in Django feature for managing data
+    # Access at: http://127.0.0.1:8000/admin/
+    path('admin/', admin.site.urls),
     
-    # This points to your restaurants app
-    path("restaurants/", include("restaurants.urls")),
+    # Homepage
+    # The empty string '' means this matches the root URL (/)
+    path('', home_view, name='home'),
     
-    # This points to your meals app
-    path("meals/", include("meals.urls")),
+    # Include URLs from our custom apps
+    # The 'include()' function delegates URL matching to other urlconf files
+    path('users/', include('users.urls')),           # User authentication
+    path('restaurants/', include('restaurants.urls')), # Restaurant listings
+    path('orders/', include('orders.urls')),          # Orders and cart
     
-    # Optional: Make restaurants the default homepage when you visit 127.0.0.1:8000/
-    path("", views.dashboard, name='home'),
+    # Note: API endpoints are included within the orders app URLs
+    # They're under /orders/api/... for organization
 ]
 
-# This allows your browser to display the ImageFields you fixed earlier
+# Serve media files during development (user-uploaded images)
+# In production, you'd use a CDN or web server like Nginx
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+# Optional: Custom error pages
+# You can add these later for 404 and 500 error pages
+# handler404 = 'swiggy.views.custom_404'
+# handler500 = 'swiggy.views.custom_500'

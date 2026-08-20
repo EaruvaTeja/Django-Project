@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- 
+Checkout Template
+
+Displays the checkout form where users enter delivery address and place their order.
+This is the final step before order creation.
+
+Key Features:
+1. Shows order summary (items and total)
+2. Delivery address form
+3. Special notes/Instructions field
+4. Form submission creates an Order in the database
+-->
+
+<div style="max-width: 900px; margin: 0 auto;">
+    <h1 style="color: #fc8019; margin-bottom: 2rem;">📍 Checkout</h1>
+    
+    {% if error %}
+        <div class="message error mb-2">{{ error }}</div>
+    {% endif %}
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+        <!-- Order Summary (Left Column) -->
+        <div>
+            <h3 style="margin-bottom: 1rem; color: #333;">Order Summary</h3>
+            
+            <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                {% for item in cart_items %}
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #eee;">
+                        <div>
+                            <strong>{{ item.menu_item.name }}</strong>
+                            <br><small class="text-muted">Qty: {{ item.quantity }}</small>
+                            {% if item.special_instructions %}
+                                <br><small class="text-muted">Note: {{ item.special_instructions }}</small>
+                            {% endif %}
+                        </div>
+                        <div style="font-weight: bold;">
+                            ${{ item.item_total|floatformat:2 }}
+                        </div>
+                    </div>
+                {% endfor %}
+                
+                <div style="border-top: 2px solid #333; padding-top: 1rem; margin-top: 1rem; display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: bold;">
+                    <span>Total:</span>
+                    <span style="color: #fc8019;">${{ total|floatformat:2 }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Delivery Form (Right Column) -->
+        <div>
+            <h3 style="margin-bottom: 1rem; color: #333;">Delivery Details</h3>
+            
+            <form method="post" style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="delivery_address">Delivery Address *</label>
+                    <textarea name="delivery_address" 
+                              id="delivery_address" 
+                              rows="4" 
+                              class="form-control" 
+                              placeholder="Enter your full delivery address including apartment number, floor, etc."
+                              required></textarea>
+                    <small class="text-muted">We'll deliver to this address</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="notes">Special Instructions (Optional)</label>
+                    <textarea name="notes" 
+                              id="notes" 
+                              rows="3" 
+                              class="form-control" 
+                              placeholder="E.g., Ring the bell twice, Call when you arrive, Leave at door..."></textarea>
+                </div>
+                
+                <button type="submit" class="btn-primary" style="width: 100%; font-size: 1.1rem; padding: 15px;">
+                    Place Order - ${{ total|floatformat:2 }}
+                </button>
+            </form>
+            
+            <p class="text-muted mt-2" style="font-size: 0.9rem;">
+                By placing this order, you agree to our terms of service.
+            </p>
+        </div>
+    </div>
+    
+    <!-- Back to Cart Link -->
+    <div style="margin-top: 2rem; text-align: center;">
+        <a href="{% url 'orders:cart' %}" class="text-muted">
+            ← Back to Cart
+        </a>
+    </div>
+</div>
+{% endblock %}

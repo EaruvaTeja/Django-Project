@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- 
+Menu Item Detail Template
+
+Displays detailed information about a specific menu item.
+This can be used for modals or dedicated item pages.
+
+Note: This template is optional and mainly used if you want
+a dedicated page for each menu item instead of showing them
+all on the restaurant detail page.
+-->
+
+<div style="max-width: 700px; margin: 0 auto;">
+    <div style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <!-- Menu Item Header -->
+        <div style="padding: 2rem; border-bottom: 1px solid #eee;">
+            <h1 style="color: #fc8019; margin-bottom: 0.5rem;">
+                {{ menu_item.name }}
+                {% if menu_item.is_vegetarian %}
+                    <span style="color: #28a745;" title="Vegetarian">🌱</span>
+                {% endif %}
+            </h1>
+            
+            <p style="font-size: 1.5rem; font-weight: bold; color: #333; margin: 1rem 0;">
+                ${{ menu_item.price }}
+            </p>
+            
+            <p class="text-muted" style="margin-bottom: 1rem;">
+                {{ menu_item.description }}
+            </p>
+            
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <span class="badge badge-warning">{{ menu_item.get_category_display }}</span>
+                <span class="badge badge-info">{{ menu_item.restaurant.name }}</span>
+            </div>
+        </div>
+        
+        <!-- Add to Cart Section -->
+        <div style="padding: 2rem;">
+            <form method="post" action="{% url 'orders:add_to_cart' menu_item.id %}">
+                {% csrf_token %}
+                
+                <input type="hidden" name="restaurant_id" value="{{ menu_item.restaurant.id }}">
+                
+                <div class="form-group">
+                    <label for="quantity">Quantity</label>
+                    <input type="number" 
+                           name="quantity" 
+                           id="quantity" 
+                           value="1" 
+                           min="1" 
+                           max="10"
+                           class="form-control"
+                           style="width: 100px;">
+                </div>
+                
+                <div class="form-group">
+                    <label for="special_instructions">Special Instructions (Optional)</label>
+                    <textarea name="special_instructions" 
+                              id="special_instructions" 
+                              rows="3" 
+                              class="form-control"
+                              placeholder="E.g., Less spicy, Extra cheese, No onions..."></textarea>
+                </div>
+                
+                <button type="submit" class="btn-primary" style="width: 100%; padding: 15px; font-size: 1.1rem;">
+                    🛒 Add to Cart
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Back Link -->
+    <div style="margin-top: 2rem; text-align: center;">
+        <a href="{% url 'restaurants:restaurant_detail' menu_item.restaurant.id %}" class="btn-secondary">
+            ← Back to {{ menu_item.restaurant.name }}
+        </a>
+    </div>
+</div>
+{% endblock %}

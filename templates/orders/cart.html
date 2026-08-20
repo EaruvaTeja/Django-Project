@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- 
+Cart Template
+
+Displays the user's shopping cart with items from the session.
+Shows item details, quantities, and allows updating or clearing the cart.
+
+Key Features:
+1. Lists all items in the cart
+2. Shows individual item totals and grand total
+3. Provides checkout button (requires login)
+4. Allows clearing the entire cart
+-->
+
+<div style="max-width: 800px; margin: 0 auto;">
+    <h1 style="color: #fc8019; margin-bottom: 2rem;">🛒 Your Cart</h1>
+    
+    {% if cart_items %}
+        <!-- Cart Items Table -->
+        <div style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead style="background: #f8f9fa;">
+                    <tr>
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">Item</th>
+                        <th style="padding: 1rem; text-align: center; border-bottom: 2px solid #dee2e6;">Quantity</th>
+                        <th style="padding: 1rem; text-align: right; border-bottom: 2px solid #dee2e6;">Price</th>
+                        <th style="padding: 1rem; text-align: right; border-bottom: 2px solid #dee2e6;">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in cart_items %}
+                        <tr style="border-bottom: 1px solid #dee2e6;">
+                            <td style="padding: 1rem;">
+                                <strong>{{ item.menu_item.name }}</strong>
+                                {% if item.special_instructions %}
+                                    <br><small class="text-muted">Note: {{ item.special_instructions }}</small>
+                                {% endif %}
+                                <br><small class="text-muted">{{ item.menu_item.restaurant.name }}</small>
+                            </td>
+                            <td style="padding: 1rem; text-align: center;">{{ item.quantity }}</td>
+                            <td style="padding: 1rem; text-align: right;">${{ item.menu_item.price }}</td>
+                            <td style="padding: 1rem; text-align: right;">${{ item.item_total|floatformat:2 }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Cart Summary -->
+        <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 1.2rem; font-weight: bold;">
+                <span>Total:</span>
+                <span style="color: #fc8019;">${{ total|floatformat:2 }}</span>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <!-- Checkout Button -->
+            {% if user.is_authenticated %}
+                <a href="{% url 'orders:checkout' %}" class="btn-primary" style="flex: 1; text-align: center; font-size: 1.1rem;">
+                    Proceed to Checkout →
+                </a>
+            {% else %}
+                <a href="{% url 'users:login' %}?next={% url 'orders:checkout' %}" 
+                   class="btn-primary" 
+                   style="flex: 1; text-align: center; font-size: 1.1rem;">
+                    Login to Checkout
+                </a>
+            {% endif %}
+            
+            <!-- Clear Cart Form -->
+            <form method="post" action="{% url 'orders:clear_cart' %}" style="flex-shrink: 0;">
+                {% csrf_token %}
+                <button type="submit" class="btn-secondary" onclick="return confirm('Are you sure you want to clear your cart?');">
+                    Clear Cart
+                </button>
+            </form>
+        </div>
+        
+        <!-- Continue Shopping Link -->
+        <div style="margin-top: 2rem; text-align: center;">
+            <a href="{% url 'restaurants:restaurant_list' %}" class="text-muted">
+                ← Continue Shopping
+            </a>
+        </div>
+    {% else %}
+        <!-- Empty Cart Message -->
+        <div style="text-align: center; padding: 4rem; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">🛒</div>
+            <h2 style="color: #666; margin-bottom: 1rem;">Your cart is empty</h2>
+            <p class="text-muted" style="margin-bottom: 2rem;">
+                Looks like you haven't added anything to your cart yet.
+            </p>
+            <a href="{% url 'restaurants:restaurant_list' %}" class="btn-primary">
+                Browse Restaurants
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- 
+Order History Template
+
+Displays all past orders for the logged-in user.
+Each order shows status, restaurant, total amount, and date.
+
+Key Features:
+1. Lists all orders with key information
+2. Color-coded status badges
+3. Links to individual order details
+4. Empty state message if no orders exist
+-->
+
+<div style="max-width: 1000px; margin: 0 auto;">
+    <h1 style="color: #fc8019; margin-bottom: 2rem;">📦 My Orders</h1>
+    
+    {% if orders %}
+        <div style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead style="background: #f8f9fa;">
+                    <tr>
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">Order #</th>
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">Restaurant</th>
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">Date & Time</th>
+                        <th style="padding: 1rem; text-align: right; border-bottom: 2px solid #dee2e6;">Total</th>
+                        <th style="padding: 1rem; text-align: center; border-bottom: 2px solid #dee2e6;">Status</th>
+                        <th style="padding: 1rem; text-align: center; border-bottom: 2px solid #dee2e6;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                        <tr style="border-bottom: 1px solid #dee2e6;">
+                            <td style="padding: 1rem; font-weight: bold;">#{{ order.id }}</td>
+                            <td style="padding: 1rem;">{{ order.restaurant.name }}</td>
+                            <td style="padding: 1rem;" class="text-muted">
+                                {{ order.created_at|date:"M d, Y" }} at {{ order.created_at|time:"H:i" }}
+                            </td>
+                            <td style="padding: 1rem; text-align: right; font-weight: bold;">
+                                ${{ order.total_amount|floatformat:2 }}
+                            </td>
+                            <td style="padding: 1rem; text-align: center;">
+                                <!-- Status Badge with color coding -->
+                                {% if order.status == 'pending' %}
+                                    <span class="badge badge-warning">Pending</span>
+                                {% elif order.status == 'confirmed' %}
+                                    <span class="badge badge-info">Confirmed</span>
+                                {% elif order.status == 'preparing' %}
+                                    <span class="badge badge-info">Preparing</span>
+                                {% elif order.status == 'out_for_delivery' %}
+                                    <span class="badge badge-info">Out for Delivery</span>
+                                {% elif order.status == 'delivered' %}
+                                    <span class="badge badge-success">Delivered ✓</span>
+                                {% elif order.status == 'cancelled' %}
+                                    <span class="badge badge-danger">Cancelled</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 1rem; text-align: center;">
+                                <a href="{% url 'orders:order_detail' order.id %}" 
+                                   class="btn-primary" 
+                                   style="padding: 5px 12px; font-size: 0.85rem;">
+                                    View Details
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <!-- No orders message -->
+        <div style="text-align: center; padding: 4rem; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">📦</div>
+            <h2 style="color: #666; margin-bottom: 1rem;">No orders yet</h2>
+            <p class="text-muted" style="margin-bottom: 2rem; max-width: 500px; margin-left: auto; margin-right: auto;">
+                You haven't placed any orders yet. Start exploring restaurants and enjoy delicious food!
+            </p>
+            <a href="{% url 'restaurants:restaurant_list' %}" class="btn-primary">
+                Browse Restaurants
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
