@@ -1,18 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<!-- 
-Restaurant List Template
 
-Displays all available restaurants in a grid layout.
-Data is passed from the restaurant_list view.
-
-Key Template Features:
-1. Loop through restaurants with {% for %}
-2. Conditional display with {% if %}
-3. URL reversing with {% url %}
-4. Template filters like |truncatewords
--->
 
 <div style="margin-bottom: 2rem;">
     <h1 style="color: #fc8019; margin-bottom: 0.5rem;">🍽️ All Restaurants</h1>
@@ -22,10 +11,10 @@ Key Template Features:
 {% if restaurants %}
     <div class="grid grid-3">
         {% for restaurant in restaurants %}
-            <!-- Restaurant Card -->
+            
             <div class="card">
                 <div class="card-body">
-                    <!-- Restaurant Name (linked to detail page) -->
+                    
                     <h3 class="card-title">
                         <a href="{% url 'restaurants:restaurant_detail' restaurant.id %}" 
                            style="color: #333; text-decoration: none;">
@@ -33,26 +22,26 @@ Key Template Features:
                         </a>
                     </h3>
                     
-                    <!-- Cuisine Type -->
+                    
                     <p class="text-muted mb-1">{{ restaurant.cuisine_type }}</p>
                     
-                    <!-- Rating and Delivery Time Badges -->
+                    
                     <div class="mb-2">
                         <span class="badge badge-success">⭐ {{ restaurant.rating }}/5</span>
                         <span class="badge badge-info">🕐 {{ restaurant.delivery_time }} mins</span>
                     </div>
                     
-                    <!-- Description (truncated for brevity) -->
+                    
                     <p class="card-text" style="font-size: 0.9rem; min-height: 60px;">
                         {{ restaurant.description|truncatewords:15 }}
                     </p>
                     
-                    <!-- Address -->
+                    
                     <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 1rem;">
                         📍 {{ restaurant.address|truncatewords:8 }}
                     </p>
                     
-                    <!-- View Menu Button -->
+                    
                     <a href="{% url 'restaurants:restaurant_detail' restaurant.id %}" 
                        class="btn-primary" 
                        style="display: block; text-align: center;">
@@ -63,7 +52,7 @@ Key Template Features:
         {% endfor %}
     </div>
 {% else %}
-    <!-- No restaurants available message -->
+    
     <div style="text-align: center; padding: 4rem; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
         <div style="font-size: 4rem; margin-bottom: 1rem;">😔</div>
         <h2 style="color: #666; margin-bottom: 1rem;">No Restaurants Available</h2>

@@ -1,16 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<!-- 
-Homepage Template
 
-This is the main landing page that users see when they visit the site.
-It demonstrates:
-1. How to extend a base template
-2. How to display data passed from the view (featured_restaurants)
-3. How to use template loops and conditionals
-4. How to generate URLs with the {% url %} tag
--->
 
 <div class="text-center mb-2">
     <h1 style="font-size: 2.5rem; color: #fc8019; margin-bottom: 1rem;">
@@ -27,17 +18,17 @@ It demonstrates:
     </div>
 </div>
 
-<!-- Featured Restaurants Section -->
+
 <section class="mt-2">
     <h2 style="margin-bottom: 1.5rem; color: #333;">Featured Restaurants</h2>
     
     {% if featured_restaurants %}
         <div class="grid grid-3">
             {% for restaurant in featured_restaurants %}
-                <!-- Restaurant Card -->
+                
                 <div class="card">
                     <div class="card-body">
-                        <!-- Restaurant Name with link to detail page -->
+                        
                         <h3 class="card-title">
                             <a href="{% url 'restaurants:restaurant_detail' restaurant.id %}" 
                                style="color: #333; text-decoration: none;">
@@ -45,25 +36,25 @@ It demonstrates:
                             </a>
                         </h3>
                         
-                        <!-- Cuisine Type -->
+                        
                         <p class="text-muted mb-1">{{ restaurant.cuisine_type }}</p>
                         
-                        <!-- Rating Badge -->
+                        
                         <span class="badge badge-success">
                             ⭐ {{ restaurant.rating }}/5
                         </span>
                         
-                        <!-- Delivery Time -->
+                        
                         <span class="badge badge-info ml-1">
                             🕐 {{ restaurant.delivery_time }} mins
                         </span>
                         
-                        <!-- Description (truncated) -->
+                        
                         <p class="card-text mt-2" style="font-size: 0.9rem;">
                             {{ restaurant.description|truncatewords:15 }}
                         </p>
                         
-                        <!-- Action Button -->
+                        
                         <a href="{% url 'restaurants:restaurant_detail' restaurant.id %}" 
                            class="btn-primary" style="display: block; text-align: center;">
                             View Menu
@@ -79,7 +70,7 @@ It demonstrates:
             </a>
         </div>
     {% else %}
-        <!-- No restaurants message -->
+        
         <div class="text-center" style="padding: 3rem; background: white; border-radius: 8px;">
             <p style="font-size: 1.2rem; color: #666;">No restaurants available yet.</p>
             <p class="text-muted">Check back later or add some through the admin panel!</p>
@@ -88,7 +79,7 @@ It demonstrates:
     {% endif %}
 </section>
 
-<!-- Features Section -->
+
 <section class="mt-2" style="background: white; padding: 2rem; border-radius: 8px;">
     <h2 style="margin-bottom: 1.5rem; text-align: center; color: #333;">How It Works</h2>
     
@@ -113,7 +104,7 @@ It demonstrates:
     </div>
 </section>
 
-<!-- API Demo Section (for learning) -->
+
 <section class="mt-2" style="background: #f0f0f0; padding: 2rem; border-radius: 8px;">
     <h2 style="margin-bottom: 1rem; color: #333;">📡 REST API Demo</h2>
     <p class="text-muted mb-2">

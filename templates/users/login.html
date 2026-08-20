@@ -1,17 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<!-- 
-User Login Template
 
-This template displays a login form using Django's built-in AuthenticationForm.
-The form includes fields for username and password.
-
-Key Concepts:
-1. Authentication in Django uses sessions - after login, a session is created
-2. The 'next' parameter allows redirecting users back to where they came from
-3. Django's auth system handles password hashing automatically
--->
 
 <div style="max-width: 450px; margin: 0 auto; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
     <h2 class="text-center mb-2" style="color: #fc8019;">Login to SwiggyClone</h2>
@@ -19,7 +9,7 @@ Key Concepts:
     <form method="post">
         {% csrf_token %}
         
-        <!-- Display non-field errors -->
+        
         {% if form.non_field_errors %}
             <div class="message error">
                 {% for error in form.non_field_errors %}
@@ -28,7 +18,7 @@ Key Concepts:
             </div>
         {% endif %}
         
-        <!-- Username Field -->
+        
         <div class="form-group">
             <label for="{{ form.username.id_for_label }}">Username</label>
             {{ form.username }}
@@ -39,7 +29,7 @@ Key Concepts:
             {% endif %}
         </div>
         
-        <!-- Password Field -->
+        
         <div class="form-group">
             <label for="{{ form.password.id_for_label }}">Password</label>
             {{ form.password }}
@@ -50,25 +40,25 @@ Key Concepts:
             {% endif %}
         </div>
         
-        <!-- Hidden 'next' field for redirect after login -->
-        <!-- If user was trying to access a protected page, they'll be redirected back there -->
+        
+        
         {% if request.GET.next %}
             <input type="hidden" name="next" value="{{ request.GET.next }}">
         {% endif %}
         
-        <!-- Submit Button -->
+        
         <button type="submit" class="btn-primary" style="width: 100%; margin-top: 1rem;">
             Login
         </button>
     </form>
     
-    <!-- Link to registration page -->
+    
     <p class="text-center mt-2">
         Don't have an account? 
         <a href="{% url 'users:register' %}" style="color: #fc8019;">Sign up here</a>
     </p>
     
-    <!-- Demo credentials hint (for learning purposes) -->
+    
     <div class="mt-2" style="background: #f8f9fa; padding: 1rem; border-radius: 4px; font-size: 0.9rem;">
         <strong style="color: #666;">💡 Tip:</strong>
         <p class="text-muted" style="margin-top: 0.5rem;">
