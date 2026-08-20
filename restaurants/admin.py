@@ -1,62 +1,43 @@
+"""
+Restaurants App Admin Configuration
+
+This file registers our models with Django's built-in admin panel.
+The admin panel allows you to manage restaurants and menu items through a web interface.
+
+Access the admin at: http://127.0.0.1:8000/admin/
+(You'll need to create a superuser first: python manage.py createsuperuser)
+"""
+
 from django.contrib import admin
-from django.utils.html import format_html
-from django.urls import reverse
-from django.db import models
-from .models import Restaurant
-from meals.models import Meal
+from .models import Restaurant, MenuItem
 
 
-# Inline admin for meals
-class MealInline(admin.TabularInline):
-    model = Meal
-    extra = 0
-    fields = ('name', 'price', 'is_available', 'created_at')
-    readonly_fields = ('created_at',)
-    ordering = ('-created_at',)
-
-# Register your models here.
 @admin.register(Restaurant)
 class RestaurantAdmin(admin.ModelAdmin):
-    list_display = ('name', 'location', 'meal_count', 'created_at')
-    list_filter = ('created_at',)
-    search_fields = ('name', 'location', 'description')
-    ordering = ('-created_at',)
-    list_per_page = 25
-    inlines = [MealInline]
+    """
+    Admin configuration for Restaurant model.
     
-    fieldsets = (
-        ('Basic Information', {
-            'fields': ('name', 'description', 'location')
-        }),
-        ('Timestamps', {
-            'fields': ('created_at', 'updated_at'),
-            'classes': ('collapse',)
-        }),
-    )
+    list_display: Columns shown in the list view
+    list_filter: Filters available on the right sidebar
+    search_fields: Fields that can be searched
+    list_editable: Fields that can be edited directly in the list view
+    """
+    list_display = ['name', 'cuisine_type', 'rating', 'delivery_time', 'is_active', 'created_at']
+    list_filter = ['is_active', 'cuisine_type', 'rating']
+    search_fields = ['name', 'description', 'address', 'cuisine_type']
+    list_editable = ['is_active', 'rating']
+    ordering = ['-rating', 'name']
+
+
+@admin.register(MenuItem)
+class MenuItemAdmin(admin.ModelAdmin):
+    """
+    Admin configuration for MenuItem model.
     
-    readonly_fields = ('created_at', 'updated_at')
-    
-    def meal_count(self, obj):
-        """Display number of meals for this restaurant"""
-        count = obj.meal_set.count()
-        if count > 0:
-            url = reverse('admin:meals_meal_changelist') + f'?restaurant__id__exact={obj.id}'
-            return format_html('<a href="{}">{} meal(s)</a>', url, count)
-        return '0'
-    meal_count.short_description = 'Meals'
-    
-    actions = ['activate_restaurant', 'deactivate_restaurant']
-    
-    def activate_restaurant(self, request, queryset):
-        """Bulk action to activate all meals in selected restaurants"""
-        for restaurant in queryset:
-            restaurant.meal_set.update(is_available=True)
-        self.message_user(request, f'All meals in {queryset.count()} restaurants were activated.')
-    activate_restaurant.short_description = "Activate all meals in selected restaurants"
-    
-    def deactivate_restaurant(self, request, queryset):
-        """Bulk action to deactivate all meals in selected restaurants"""
-        for restaurant in queryset:
-            restaurant.meal_set.update(is_available=False)
-        self.message_user(request, f'All meals in {queryset.count()} restaurants were deactivated.')
-    deactivate_restaurant.short_description = "Deactivate all meals in selected restaurants"
+    This allows managing menu items with filtering by restaurant and category.
+    """
+    list_display = ['name', 'restaurant', 'category', 'price', 'is_vegetarian', 'is_available']
+    list_filter = ['is_available', 'is_vegetarian', 'category', 'restaurant']
+    search_fields = ['name', 'description']
+    list_editable = ['is_available', 'price']
+    ordering = ['restaurant', 'category', 'name']

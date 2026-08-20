@@ -1,271 +1,105 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
-from django.core.paginator import Paginator
-from django.http import JsonResponse
-from django.utils import timezone
-from .models import Restaurant
-from .forms import RestaurantForm
-from meals.models import Meal
-from meals.forms import MealForm, MealSearchForm
+"""
+Restaurants App Views
+
+This app handles displaying restaurants and their menu items.
+
+Data Flow (MVT Pattern - Model View Template):
+1. User visits a URL like /restaurants/ or /restaurants/5/
+2. Django's URL router matches the URL to a view function
+3. The view queries the database (Model) to get restaurant/menu data
+4. The view passes this data to a template (Template)
+5. The template renders HTML with the data and sends it back to the user
+
+Key Views:
+- restaurant_list: Shows all restaurants
+- restaurant_detail: Shows a specific restaurant with its menu
+"""
+
+from django.shortcuts import render, get_object_or_404
+from .models import Restaurant, MenuItem
 
 
-def dashboard(request):
-    """Basic restaurant dashboard"""
-    restaurants = Restaurant.objects.all()
-    return render(request, 'restaurants/dashboard.html', {'restaurants': restaurants})
-
-
-def restaurant_dashboard(request, restaurant_id=None):
-    """Detailed restaurant dashboard for owners and admins"""
-    restaurants = Restaurant.objects.all()
+def restaurant_list(request):
+    """
+    Display a list of all active restaurants.
     
-    if restaurant_id:
-        restaurant = get_object_or_404(Restaurant, id=restaurant_id)
-    else:
-        restaurant = restaurants.first() if restaurants.exists() else None
+    This view demonstrates:
+    - Querying the database using Django ORM
+    - Filtering data (only active restaurants)
+    - Passing context data to templates
     
-    meals = []
-    meals_paginator = None
-    meals_page_obj = None
+    Database Query: SELECT * FROM restaurants_restaurant WHERE is_active=True
+    Template: restaurants/restaurant_list.html
+    """
+    # Query all active restaurants from the database
+    # Order by rating (highest first) for better user experience
+    restaurants = Restaurant.objects.filter(is_active=True).order_by('-rating')
     
-    if restaurant:
-        all_meals = Meal.objects.filter(restaurant=restaurant).order_by('-created_at')
-        meals_paginator = Paginator(all_meals, 5)
-        page_number = request.GET.get('meals_page', 1)
-        meals_page_obj = meals_paginator.get_page(page_number)
-        meals = meals_page_obj
-    
-    recent_orders = []
-    
+    # Context dictionary passes data from view to template
+    # In the template, you can access {{ restaurants }} to iterate over them
     context = {
-        'restaurant': restaurant,
         'restaurants': restaurants,
-        'meals': meals,
-        'meals_page_obj': meals_page_obj,
-        'meals_paginator': meals_paginator,
-        'is_meals_paginated': meals_page_obj.has_other_pages() if meals_page_obj else False,
-        'recent_orders': recent_orders,
+        'page_title': 'All Restaurants'
     }
-    return render(request, 'restaurants/restaurant_dashboard.html', context)
-
-
-def manage_meals(request, restaurant_id=None):
-    """Manage meals for restaurant"""
-    if restaurant_id:
-        restaurant = get_object_or_404(Restaurant, id=restaurant_id)
-    else:
-        restaurants = Restaurant.objects.all()
-        restaurant = restaurants.first() if restaurants.exists() else None
     
-    if not restaurant:
-        messages.error(request, 'No restaurant found.')
-        return redirect('restaurants:restaurant_dashboard')
-    
-    search_form = MealSearchForm(request.GET)
-    meals = Meal.objects.filter(restaurant=restaurant)
-    
-    if search_form.is_valid():
-        search = search_form.cleaned_data.get('search')
-        is_available = search_form.cleaned_data.get('is_available')
-        
-        if search:
-            meals = meals.filter(name__icontains=search)
-        if is_available:
-            meals = meals.filter(is_available=(is_available == 'true'))
-    
-    paginator = Paginator(meals, 10)
-    page_number = request.GET.get('page')
-    meals = paginator.get_page(page_number)
-    
-    context = {
-        'restaurant': restaurant,
-        'meals': meals,
-        'search_form': search_form,
-    }
-    return render(request, 'restaurants/manage_meals.html', context)
-
-
-def add_meal(request, restaurant_id=None):
-    """Add a new meal"""
-    if restaurant_id:
-        restaurant = get_object_or_404(Restaurant, id=restaurant_id)
-    else:
-        restaurants = Restaurant.objects.all()
-        restaurant = restaurants.first() if restaurants.exists() else None
-    
-    if not restaurant:
-        messages.error(request, 'No restaurant found.')
-        return redirect('restaurants:restaurant_dashboard')
-    
-    if request.method == 'POST':
-        form = MealForm(request.POST, request.FILES, restaurant=restaurant)
-        if form.is_valid():
-            meal = form.save(commit=False)
-            meal.restaurant = restaurant
-            meal.save()
-            messages.success(request, f'Meal "{meal.name}" added successfully!')
-            return redirect('restaurants:manage_meals_for_restaurant', restaurant_id=restaurant.id)
-    else:
-        form = MealForm(restaurant=restaurant)
-    
-    context = {
-        'form': form,
-        'restaurant': restaurant,
-    }
-    return render(request, 'restaurants/access_meal.html', context)
-
-
-def edit_meal(request, meal_id):
-    """Edit an existing meal"""
-    meal = get_object_or_404(Meal, id=meal_id)
-    
-    if request.method == 'POST':
-        form = MealForm(request.POST, request.FILES, instance=meal, restaurant=meal.restaurant)
-        if form.is_valid():
-            form.save()
-            messages.success(request, f'Meal "{meal.name}" updated successfully!')
-            return redirect('restaurants:manage_meals_for_restaurant', restaurant_id=meal.restaurant.id)
-    else:
-        form = MealForm(instance=meal, restaurant=meal.restaurant)
-    
-    context = {
-        'form': form,
-        'meal': meal,
-        'restaurant': meal.restaurant,
-    }
-    return render(request, 'restaurants/edit_meal.html', context)
-
-
-def delete_meal(request, meal_id):
-    """Delete a meal"""
-    meal = get_object_or_404(Meal, id=meal_id)
-    
-    if request.method == 'POST':
-        meal_name = meal.name
-        meal.delete()
-        messages.success(request, f'Meal "{meal_name}" deleted successfully!')
-        return redirect('restaurants:manage_meals_for_restaurant', restaurant_id=meal.restaurant.id)
-    
-    context = {
-        'meal': meal,
-    }
-    return render(request, 'restaurants/delete_meal.html', context)
-
-
-def toggle_meal_availability(request, meal_id):
-    """Toggle meal availability via AJAX"""
-    meal = get_object_or_404(Meal, id=meal_id)
-    
-    if request.method == 'POST':
-        meal.is_available = not meal.is_available
-        meal.save()
-        return JsonResponse({
-            'success': True,
-            'is_available': meal.is_available,
-            'message': f'Meal is now {"available" if meal.is_available else "unavailable"}'
-        })
-    
-    return JsonResponse({'success': False, 'error': 'Invalid request method'})
-
-
-def restaurant_settings(request, restaurant_id=None):
-    """Restaurant settings and profile management"""
-    if restaurant_id:
-        restaurant = get_object_or_404(Restaurant, id=restaurant_id)
-    else:
-        restaurants = Restaurant.objects.all()
-        restaurant = restaurants.first() if restaurants.exists() else None
-    
-    if not restaurant:
-        messages.error(request, 'No restaurant found.')
-        return redirect('restaurants:restaurant_dashboard')
-    
-    if request.method == 'POST':
-        form = RestaurantForm(request.POST, request.FILES, instance=restaurant)
-        if form.is_valid():
-            form.save()
-            if 'hero_image' in request.FILES:
-                messages.success(request, 'Restaurant settings and hero image updated successfully!')
-            else:
-                messages.success(request, 'Restaurant settings updated successfully!')
-            return redirect('restaurants:restaurant_settings')
-        else:
-            messages.error(request, 'Please correct the errors below.')
-    else:
-        form = RestaurantForm(instance=restaurant)
-    
-    total_meals = Meal.objects.filter(restaurant=restaurant).count()
-    available_meals = Meal.objects.filter(restaurant=restaurant, is_available=True).count()
-    
-    context = {
-        'form': form,
-        'restaurant': restaurant,
-        'total_meals': total_meals,
-        'available_meals': available_meals,
-        'total_orders': 0,
-        'total_revenue': 0.0,
-    }
-    return render(request, 'restaurants/restaurant_settings.html', context)
+    # render() combines the template with context data and returns an HttpResponse
+    return render(request, 'restaurants/restaurant_list.html', context)
 
 
 def restaurant_detail(request, restaurant_id):
-    """Public restaurant detail page for customers"""
-    restaurant = get_object_or_404(Restaurant, id=restaurant_id)
+    """
+    Display details of a specific restaurant and its menu.
     
-    meals = Meal.objects.filter(restaurant=restaurant, is_available=True).order_by('name')
-    total_meals = meals.count()
-    avg_rating = restaurant.overall_rating or 4.5
-    similar_restaurants = Restaurant.objects.exclude(id=restaurant_id)[:3]
+    This view demonstrates:
+    - Getting a single object by ID (or 404 if not found)
+    - URL parameters (restaurant_id comes from the URL)
+    - Related object queries (menu items belong to a restaurant)
+    
+    Database Queries:
+    1. SELECT * FROM restaurants_restaurant WHERE id = restaurant_id
+    2. SELECT * FROM restaurants_menuitem WHERE restaurant_id = restaurant_id AND is_available=True
+    
+    Template: restaurants/restaurant_detail.html
+    """
+    # get_object_or_404 fetches the object or returns a 404 error page if not found
+    # This is safer than Restaurant.objects.get(id=restaurant_id) which would raise an exception
+    restaurant = get_object_or_404(Restaurant, id=restaurant_id, is_active=True)
+    
+    # Get all available menu items for this restaurant
+    # Uses the related_name='menu_items' defined in the ForeignKey
+    menu_items = restaurant.menu_items.filter(is_available=True)
+    
+    # Group menu items by category for better display
+    categories = {}
+    for item in menu_items:
+        if item.category not in categories:
+            categories[item.category] = []
+        categories[item.category].append(item)
     
     context = {
         'restaurant': restaurant,
-        'meals': meals,
-        'total_meals': total_meals,
-        'avg_rating': avg_rating,
-        'similar_restaurants': similar_restaurants,
+        'menu_items': menu_items,
+        'categories': categories,
+        'page_title': restaurant.name
     }
+    
     return render(request, 'restaurants/restaurant_detail.html', context)
 
 
-def restaurant_orders(request, restaurant_id=None):
-    """Restaurant orders page (dummy data for viewing template)"""
-    if restaurant_id:
-        restaurant = get_object_or_404(Restaurant, id=restaurant_id)
-    else:
-        restaurants = Restaurant.objects.all()
-        restaurant = restaurants.first() if restaurants.exists() else None
+def menu_item_detail(request, item_id):
+    """
+    Display details of a specific menu item.
     
-    class DummyUser:
-        def __init__(self):
-            self.username = 'demo_user'
-            self.email = 'demo@example.com'
-        def get_full_name(self):
-            return self.username
+    This is useful for showing a modal or dedicated page for a menu item.
     
-    class DummyItems:
-        def all(self):
-            return []
-    
-    class DummyOrder:
-        def __init__(self, pk):
-            self.id = pk
-            self.created_at = timezone.now()
-            self.user = DummyUser()
-            self.status = 'pending'
-            self.total_amount = 0.0
-            self.items = DummyItems()
-        
-        def get_status_display(self):
-            return self.status.title()
-    
-    dummy_orders = [DummyOrder(i) for i in range(1, 4)]
-    
-    paginator = Paginator(dummy_orders, 10)
-    page_number = request.GET.get('page')
-    orders = paginator.get_page(page_number)
+    Template: restaurants/menu_item_detail.html
+    """
+    menu_item = get_object_or_404(MenuItem, id=item_id, is_available=True)
     
     context = {
-        'restaurant': restaurant,
-        'orders': orders,
+        'menu_item': menu_item,
+        'restaurant': menu_item.restaurant,
+        'page_title': menu_item.name
     }
-    return render(request, 'restaurants/restaurant_orders.html', context)
+    
+    return render(request, 'restaurants/menu_item_detail.html', context)

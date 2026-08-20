@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- 
+Order Detail Template
+
+Displays detailed information about a specific order including:
+- Order ID, date, and status
+- Restaurant information
+- List of ordered items with quantities and prices
+- Delivery address and special notes
+- Total amount paid
+
+This template helps users track their orders and review past purchases.
+-->
+
+<div style="max-width: 800px; margin: 0 auto;">
+    <!-- Order Header -->
+    <div style="background: white; padding: 2rem; border-radius: 8px; margin-bottom: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <h1 style="color: #fc8019; margin-bottom: 0.5rem;">Order #{{ order.id }}</h1>
+                <p class="text-muted">Placed on {{ order.created_at|date:"F d, Y at H:i" }}</p>
+            </div>
+            
+            <!-- Status Badge -->
+            <div>
+                {% if order.status == 'pending' %}
+                    <span class="badge badge-warning" style="font-size: 1rem; padding: 8px 16px;">Pending</span>
+                {% elif order.status == 'confirmed' %}
+                    <span class="badge badge-info" style="font-size: 1rem; padding: 8px 16px;">Confirmed</span>
+                {% elif order.status == 'preparing' %}
+                    <span class="badge badge-info" style="font-size: 1rem; padding: 8px 16px;">Preparing</span>
+                {% elif order.status == 'out_for_delivery' %}
+                    <span class="badge badge-info" style="font-size: 1rem; padding: 8px 16px;">Out for Delivery</span>
+                {% elif order.status == 'delivered' %}
+                    <span class="badge badge-success" style="font-size: 1rem; padding: 8px 16px;">Delivered ✓</span>
+                {% elif order.status == 'cancelled' %}
+                    <span class="badge badge-danger" style="font-size: 1rem; padding: 8px 16px;">Cancelled</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Order Details Grid -->
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+        <!-- Order Items (Left Column) -->
+        <div>
+            <h3 style="margin-bottom: 1rem; color: #333;">🍽️ Order Items</h3>
+            
+            <div style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                {% for item in order.items.all %}
+                    <div style="padding: 1rem; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong style="font-size: 1.1rem;">{{ item.menu_item.name }}</strong>
+                            {% if item.special_instructions %}
+                                <br><small class="text-muted">Note: {{ item.special_instructions }}</small>
+                            {% endif %}
+                            <br><small class="text-muted">Qty: {{ item.quantity }} × ${{ item.price }}</small>
+                        </div>
+                        <div style="font-weight: bold; font-size: 1.1rem;">
+                            ${{ item.subtotal|floatformat:2 }}
+                        </div>
+                    </div>
+                {% endfor %}
+                
+                <!-- Order Total -->
+                <div style="padding: 1rem; background: #f8f9fa; display: flex; justify-content: space-between; align-items: center; font-size: 1.2rem; font-weight: bold;">
+                    <span>Total:</span>
+                    <span style="color: #fc8019;">${{ order.total_amount|floatformat:2 }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Delivery Info (Right Column) -->
+        <div>
+            <h3 style="margin-bottom: 1rem; color: #333;">📍 Delivery Information</h3>
+            
+            <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 1rem;">
+                <h4 style="margin-bottom: 0.5rem; color: #fc8019;">{{ order.restaurant.name }}</h4>
+                <p class="text-muted" style="font-size: 0.9rem;">{{ order.restaurant.cuisine_type }}</p>
+            </div>
+            
+            <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 1rem;">
+                <h4 style="margin-bottom: 0.5rem;">Delivery Address</h4>
+                <p class="text-muted">{{ order.delivery_address|linebreaks }}</p>
+            </div>
+            
+            {% if order.notes %}
+                <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <h4 style="margin-bottom: 0.5rem;">Special Instructions</h4>
+                    <p class="text-muted">{{ order.notes|linebreaks }}</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+        <a href="{% url 'orders:order_history' %}" class="btn-secondary">
+            ← Back to Order History
+        </a>
+        
+        {% if order.status == 'delivered' %}
+            <a href="{% url 'restaurants:restaurant_detail' order.restaurant.id %}" class="btn-primary">
+                Order Again from {{ order.restaurant.name }}
+            </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

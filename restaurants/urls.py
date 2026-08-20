@@ -1,22 +1,33 @@
+"""
+Restaurants App URL Configuration
+
+This file defines the URL patterns for restaurant-related views.
+These URLs are included in the main project's urls.py.
+
+URL Patterns:
+- /restaurants/ -> restaurant_list (shows all restaurants)
+- /restaurants/<id>/ -> restaurant_detail (shows specific restaurant and menu)
+- /menu-items/<id>/ -> menu_item_detail (shows specific menu item details)
+
+Note: The <int:restaurant_id> syntax captures an integer from the URL
+and passes it as a parameter to the view function.
+"""
+
 from django.urls import path
 from . import views
 
-app_name = 'restaurants'
+app_name = 'restaurants'  # Namespace for URL reversing (e.g., 'restaurants:list')
 
 urlpatterns = [
-    path('', views.dashboard, name='dashboard'),
-    path('restaurant-dashboard/', views.restaurant_dashboard, name='restaurant_dashboard'),
-    path('restaurant-dashboard/<int:restaurant_id>/', views.restaurant_dashboard, name='restaurant_dashboard_for_restaurant'),
-    path('manage-meals/', views.manage_meals, name='manage_meals'),
-    path('manage-meals/<int:restaurant_id>/', views.manage_meals, name='manage_meals_for_restaurant'),
-    path('add-meal/', views.add_meal, name='add_meal'),
-    path('add-meal/<int:restaurant_id>/', views.add_meal, name='add_meal_for_restaurant'),
-    path('edit-meal/<int:meal_id>/', views.edit_meal, name='edit_meal'),
-    path('delete-meal/<int:meal_id>/', views.delete_meal, name='delete_meal'),
-    path('toggle-meal/<int:meal_id>/', views.toggle_meal_availability, name='toggle_meal'),
-    path('settings/', views.restaurant_settings, name='restaurant_settings'),
-    path('settings/<int:restaurant_id>/', views.restaurant_settings, name='restaurant_settings_for_restaurant'),
-    path('detail/<int:restaurant_id>/', views.restaurant_detail, name='restaurant_detail'),
-    path('restaurant-orders/', views.restaurant_orders, name='restaurant_orders'),
-    path('restaurant-orders/<int:restaurant_id>/', views.restaurant_orders, name='restaurant_orders_for_restaurant'),
+    # List all restaurants
+    # Example: /restaurants/
+    path('', views.restaurant_list, name='restaurant_list'),
+    
+    # Display a specific restaurant with its menu
+    # Example: /restaurants/5/ (where 5 is the restaurant ID)
+    path('<int:restaurant_id>/', views.restaurant_detail, name='restaurant_detail'),
+    
+    # Display details of a specific menu item
+    # Example: /menu-items/10/
+    path('menu-items/<int:item_id>/', views.menu_item_detail, name='menu_item_detail'),
 ]
