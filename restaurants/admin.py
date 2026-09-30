@@ -9,6 +9,7 @@ Access the admin at: http://127.0.0.1:8000/admin/
 """
 
 from django.contrib import admin
+from django.utils.html import format_html
 from .models import Restaurant, MenuItem
 
 
@@ -16,28 +17,93 @@ from .models import Restaurant, MenuItem
 class RestaurantAdmin(admin.ModelAdmin):
     """
     Admin configuration for Restaurant model.
-    
+
     list_display: Columns shown in the list view
     list_filter: Filters available on the right sidebar
     search_fields: Fields that can be searched
     list_editable: Fields that can be edited directly in the list view
+    fieldsets: Grouped sections shown in the detail form
     """
-    list_display = ['name', 'cuisine_type', 'rating', 'delivery_time', 'is_active', 'created_at']
+
+    # ------------------------------------------------------------------
+    # List view
+    # ------------------------------------------------------------------
+    list_display = [
+        'name',
+        'image_thumbnail',
+        'cuisine_type',
+        'rating',
+        'delivery_time',
+        'distance_km',
+        'is_active',
+        'created_at',
+    ]
     list_filter = ['is_active', 'cuisine_type', 'rating']
     search_fields = ['name', 'description', 'address', 'cuisine_type']
-    list_editable = ['is_active', 'rating']
+    list_editable = ['is_active', 'rating', 'distance_km']
     ordering = ['-rating', 'name']
+
+    # ------------------------------------------------------------------
+    # Detail form — grouped into collapsible sections
+    # ------------------------------------------------------------------
+    fieldsets = [
+        ('Basic Info', {
+            'fields': ['name', 'description', 'cuisine_type']
+        }),
+        ('Contact & Location', {
+            'fields': ['address']
+        }),
+        ('Delivery & Rating', {
+            'fields': ['rating', 'delivery_time', 'distance_km', 'is_active']
+        }),
+        ('Image', {
+            'fields': ['image'],
+            'description': (
+                'Upload a cover image for this restaurant. '
+                'Recommended: 800x450px, JPG or PNG.'
+            ),
+        }),
+    ]
+
+    # ------------------------------------------------------------------
+    # Custom column — small thumbnail in the list view
+    # ------------------------------------------------------------------
+    @admin.display(description='Image')
+    def image_thumbnail(self, obj):
+        """
+        Show a small thumbnail in the list view.
+        Displays '—' when no image is set.
+        """
+        if obj.image:
+            return format_html(
+                '<img src="{}" style="height:40px;width:60px;'
+                'object-fit:cover;border-radius:4px;border:1px solid #ddd;" />',
+                obj.image.url,
+            )
+        return '—'
 
 
 @admin.register(MenuItem)
 class MenuItemAdmin(admin.ModelAdmin):
     """
     Admin configuration for MenuItem model.
-    
-    This allows managing menu items with filtering by restaurant and category.
     """
-    list_display = ['name', 'restaurant', 'category', 'price', 'is_vegetarian', 'is_available']
-    list_filter = ['is_available', 'is_vegetarian', 'category', 'restaurant']
+    list_display = [
+        'name',
+        'restaurant',
+        'category',
+        'price',
+        'rating',
+        'rating_count',
+        'is_vegetarian',
+        'is_available',
+    ]
+    list_filter = [
+        'is_available',
+        'is_vegetarian',
+        'category',
+        'restaurant',
+    ]
     search_fields = ['name', 'description']
-    list_editable = ['is_available', 'price']
+    list_editable = ['is_available', 'price', 'rating']
     ordering = ['restaurant', 'category', 'name']

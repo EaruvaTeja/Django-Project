@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-msb$4$o+lb5zaql++-6bti#916cz*8@p#1k&!!&6q_1d^6&s4a'
+SECRET_KEY = 'your-secret-key-here'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -42,17 +43,43 @@ INSTALLED_APPS = [
     'django.contrib.sessions',    # Session management
     'django.contrib.messages',    # Messaging framework
     'django.contrib.staticfiles', # Static file handling
+
+    'corsheaders', # CORS (to prevent connection of backend-frontend)
     
     # Third-party apps
     'rest_framework',             # Django REST Framework for API endpoints
+    'rest_framework_simplejwt.token_blacklist', # blacklist Access/refresh tokens while logout
     
     # Local apps (our custom apps)
     'users',                      # User authentication app
     'restaurants',                # Restaurant and menu management app
     'orders',                     # Orders and cart management app
+    'cart',                       # cart management app
+    'payments'                    # payments management app
 ]
 
+# Django REST Framework Configuration
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',   # This creates temperary session_id in browser without token
+    ),
+    # Optional: You can add this if you want to require authentication globally,
+    # but we will leave it open for now.
+
+    # Django REST Framework Configuration
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',  # Allow unauthenticated requests (for learning)
+    ],
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),   # Token expires in 30 min
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),      # Refresh token valid for 1 day
+}
+
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',    # CORS (to prevent connection of backend-frontend)
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -91,9 +118,9 @@ WSGI_APPLICATION = 'swiggy.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'swiggy_db',
-        'USER': 'swiggy_user',
-        'PASSWORD': 'Teja9469#',
+        'NAME': 'your_db_name',
+        'USER': 'your_db_user',
+        'PASSWORD': 'your_db_password',
         'HOST': 'localhost',
         'PORT': '3306',
         'OPTIONS': {
@@ -159,9 +186,26 @@ MAILERS = {
     },
 }
 
-# Django REST Framework Configuration
-REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',  # Allow unauthenticated requests (for learning)
-    ],
-}
+# ============================================================
+# RAZORPAY CONFIGURATION (Test Mode)
+# ============================================================
+# These are TEST keys from the Razorpay dashboard.
+# In production, move these to environment variables (.env).
+#
+# How to get them:
+#   Razorpay Dashboard -> Settings -> API Keys -> Generate Test Key
+#
+# RAZORPAY_KEY_ID     : starts with "rzp_test_"
+# RAZORPAY_KEY_SECRET : long alphanumeric string (never share this)
+
+RAZORPAY_KEY_ID = 'rzp_test_XXXXXXXXXXXXXXXX'
+RAZORPAY_KEY_SECRET = 'your_razorpay_key_secret_here'
+
+# Backend Frontend Cors connection.
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://your-local-ip:3000',  # Replace with your actual local network IP if needed
+]
+
+CORS_ALLOW_CREDENTIALS = True

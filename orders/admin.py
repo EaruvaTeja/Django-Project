@@ -14,50 +14,64 @@ from .models import Order, OrderItem
 class OrderItemInline(admin.TabularInline):
     """
     Inline admin for OrderItems within an Order.
-    
-    This allows viewing and editing order items directly on the Order detail page.
-    extra: Number of empty forms to show for adding new items
-    readonly_fields: Fields that cannot be edited (calculated values)
     """
     model = OrderItem
-    extra = 0  # Don't show empty forms by default
+    extra = 0
     readonly_fields = ['subtotal']
-    fields = ['menu_item', 'quantity', 'price', 'special_instructions', 'subtotal']
+    fields = [
+        'menu_item',
+        'quantity',
+        'price',
+        'special_instructions',
+        'subtotal',
+    ]
 
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     """
     Admin configuration for Order model.
-    
-    list_display: Columns shown in the order list
-    list_filter: Filters for narrowing down orders
-    search_fields: Fields that can be searched
-    readonly_fields: Fields that cannot be edited (like timestamps)
-    inlines: Related models to show inline (OrderItems)
     """
-    list_display = ['id', 'user', 'restaurant', 'total_amount', 'status', 'created_at']
+    list_display = [
+        'id',
+        'user',
+        'restaurant',
+        'subtotal',
+        'delivery_fee',
+        'gst_amount',
+        'total_amount',
+        'status',
+        'created_at',
+    ]
     list_filter = ['status', 'restaurant', 'created_at']
     search_fields = ['user__username', 'user__email', 'delivery_address']
-    readonly_fields = ['created_at', 'updated_at', 'total_amount']
+    readonly_fields = [
+        'subtotal',
+        'delivery_fee',
+        'gst_amount',
+        'total_amount',
+        'created_at',
+        'updated_at',
+    ]
     inlines = [OrderItemInline]
-    ordering = ['-created_at']  # Most recent orders first
-    
-    def save_model(self, request, obj, form, change):
+    ordering = ['-created_at']
+
+    def save_related(self, request, form, formsets, change):
         """
-        Override save to recalculate total when order is modified.
-        This ensures the total_amount stays accurate.
+        Recompute ALL money fields AFTER inlines (items) are saved.
+
+        Uses Order.recompute_fees() which:
+          1. Re-derives delivery_fee from restaurant.distance_km
+          2. Recomputes subtotal + gst + total from the (now saved) items
         """
-        super().save_model(request, obj, form, change)
-        obj.calculate_total()
+        super().save_related(request, form, formsets, change)
+        form.instance.recompute_fees()
 
 
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
     """
     Admin configuration for OrderItem model.
-    
-    Usually accessed through the Order inline, but this provides a standalone view.
     """
     list_display = ['order', 'menu_item', 'quantity', 'price', 'subtotal']
     readonly_fields = ['subtotal']
