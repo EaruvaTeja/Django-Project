@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -42,17 +43,43 @@ INSTALLED_APPS = [
     'django.contrib.sessions',    # Session management
     'django.contrib.messages',    # Messaging framework
     'django.contrib.staticfiles', # Static file handling
+
+    'corsheaders', # CORS (to prevent connection of backend-frontend)
     
     # Third-party apps
     'rest_framework',             # Django REST Framework for API endpoints
+    'rest_framework_simplejwt.token_blacklist', # blacklist Access/refresh tokens while logout
     
     # Local apps (our custom apps)
     'users',                      # User authentication app
     'restaurants',                # Restaurant and menu management app
     'orders',                     # Orders and cart management app
+    'cart',                       # cart management app
+    'payments'                    # payments management app
 ]
 
+# Django REST Framework Configuration
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',   # This creates temperary session_id in browser without token
+    ),
+    # Optional: You can add this if you want to require authentication globally,
+    # but we will leave it open for now.
+
+    # Django REST Framework Configuration
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',  # Allow unauthenticated requests (for learning)
+    ],
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),   # Token expires in 30 min
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),      # Refresh token valid for 1 day
+}
+
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',    # CORS (to prevent connection of backend-frontend)
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -159,9 +186,28 @@ MAILERS = {
     },
 }
 
-# Django REST Framework Configuration
-REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',  # Allow unauthenticated requests (for learning)
-    ],
-}
+# ============================================================
+# RAZORPAY CONFIGURATION (Test Mode)
+# ============================================================
+# These are TEST keys from the Razorpay dashboard.
+# In production, move these to environment variables (.env).
+#
+# How to get them:
+#   Razorpay Dashboard -> Settings -> API Keys -> Generate Test Key
+#
+# RAZORPAY_KEY_ID     : starts with "rzp_test_"
+# RAZORPAY_KEY_SECRET : long alphanumeric string (never share this)
+
+RAZORPAY_KEY_ID = 'rzp_test_TeKmRoyZTSDjrs'
+RAZORPAY_KEY_SECRET = 'jBIv23AGboBOt4HW4jxIloVt'
+
+# Backend Frontend Cors connection.
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://192.168.29.185:3000',
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+
